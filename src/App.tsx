@@ -375,7 +375,7 @@ export default function App() {
               <RotateCcw size={10} /> Force Update
             </button>
             <p className="text-[10px] font-mono text-[var(--color-gray-500)] uppercase tracking-widest">
-              v2.0.4 • Strategy Optimized
+              v2.0.5 • Icon Updated
             </p>
           </div>
         </motion.div>
@@ -627,7 +627,7 @@ export default function App() {
           >
             <RotateCcw size={10} /> Force Update
           </button>
-          <p>v2.0.4 • Strategy Optimized</p>
+          <p>v2.0.5 • Icon Updated</p>
         </div>
       </div>
     </div>
