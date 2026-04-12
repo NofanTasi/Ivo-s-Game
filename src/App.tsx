@@ -371,11 +371,24 @@ export default function App() {
     <div className="min-h-screen p-4 md:p-8 font-sans text-[var(--color-text-main)]">
       {/* Header */}
       <div className="max-w-7xl mx-auto mb-8 flex justify-between items-center">
-        <div className="flex items-center gap-4">
-          <div className="bg-[var(--color-pure-red)] p-3 rounded-lg">
-            <Trophy className="text-[var(--color-pure-white)] w-6 h-6" />
+        <div className="flex items-center gap-6">
+          {/* Custom IVO Logo */}
+          <div className="font-mono leading-none select-none">
+            <div className="flex gap-2 mb-1">
+              <span className="text-[var(--color-pure-red)] font-black">I</span>
+              <span className="text-[var(--color-pure-green)] font-black">V</span>
+              <span className="text-[var(--color-pure-blue)] font-black">O</span>
+            </div>
+            <div className="flex justify-center mb-1">
+              <span className="text-[var(--color-pure-white)] font-black">x</span>
+            </div>
+            <div className="flex gap-2">
+              <span className="text-[var(--color-pure-cyan)] font-black">O</span>
+              <span className="text-[var(--color-pure-magenta)] font-black">^</span>
+              <span className="text-[var(--color-pure-yellow)] font-black">I</span>
+            </div>
           </div>
-          <h1 className="text-xl font-bold tracking-tight">Multiplication Quest</h1>
+          <h1 className="text-xl font-bold tracking-tight uppercase">Multiplication Quest</h1>
         </div>
 
         <div className="flex gap-2">
@@ -500,7 +513,7 @@ export default function App() {
                     aspect-square flex items-center justify-center text-[10px] font-bold transition-all border
                     ${square.id === errorSquareId ? 'bg-[var(--color-pure-red)] border-[var(--color-pure-white)] text-[var(--color-pure-white)] z-20 scale-110' : 
                       square.highlighted ? 
-                      'bg-[var(--color-square-used)] border-[var(--color-pure-green)]/30 text-black' : 
+                      'bg-[var(--color-square-used)] border-[var(--color-pure-green)]/30 !text-black' : 
                       'bg-[var(--color-bg-main)] border-[var(--color-gray-900)] text-[var(--color-gray-500)] hover:text-[var(--color-pure-white)] hover:border-[var(--color-gray-700)]'}
                   `}
                 >
