@@ -29,6 +29,7 @@ import confetti from 'canvas-confetti';
 
 type PlayerType = 'human' | 'ai';
 type Player = 'player1' | 'player2';
+type GameMode = 'alone' | 'human-human' | 'computer-human' | 'human-computer';
 
 interface BlockData {
   id: string;
@@ -47,6 +48,7 @@ interface SquareData {
 
 interface GameState {
   n: number;
+  mode: GameMode;
   players: {
     player1: { type: PlayerType; score: number; name: string };
     player2: { type: PlayerType; score: number; name: string };
@@ -62,7 +64,7 @@ interface GameState {
 
 // --- Constants ---
 
-const MIN_N = 5;
+const MIN_N = 7;
 const MAX_N = 13;
 
 // --- Utilities ---
@@ -100,24 +102,51 @@ const generateSquares = (n: number): SquareData[] => {
 
 export default function App() {
   const [n, setN] = useState(9);
-  const [p2Type, setP2Type] = useState<PlayerType>('ai');
-  const [startingPlayer, setStartingPlayer] = useState<Player>('player1');
+  const [mode, setMode] = useState<GameMode>('human-computer');
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [showSettings, setShowSettings] = useState(true);
   const [zoom, setZoom] = useState(1);
-  const [showStrategy, setShowStrategy] = useState(false);
+  const [errorSquareId, setErrorSquareId] = useState<number | null>(null);
 
   // Initialize Game
   const initGame = useCallback(() => {
     const initialBlocks = generateBlocks(n);
     const initialSquares = generateSquares(n);
+    setErrorSquareId(null);
+    
+    let p1Type: PlayerType = 'human';
+    let p2Type: PlayerType = 'human';
+    let currentPlayer: Player = 'player1';
+
+    switch (mode) {
+      case 'alone':
+        p1Type = 'human';
+        p2Type = 'human'; // Doesn't matter much
+        break;
+      case 'human-human':
+        p1Type = 'human';
+        p2Type = 'human';
+        break;
+      case 'computer-human':
+        p1Type = 'ai';
+        p2Type = 'human';
+        currentPlayer = 'player1'; // AI starts
+        break;
+      case 'human-computer':
+        p1Type = 'human';
+        p2Type = 'ai';
+        currentPlayer = 'player1'; // Human starts
+        break;
+    }
+
     setGameState({
       n,
+      mode,
       players: {
-        player1: { type: 'human', score: 0, name: 'Player 1' },
-        player2: { type: p2Type, score: 0, name: p2Type === 'ai' ? 'Computer' : 'Player 2' },
+        player1: { type: p1Type, score: 0, name: p1Type === 'ai' ? 'Computer' : 'Player 1' },
+        player2: { type: p2Type, score: 0, name: p2Type === 'ai' ? 'Computer' : (mode === 'alone' ? 'Exercise' : 'Player 2') },
       },
-      currentPlayer: startingPlayer,
+      currentPlayer,
       blocks: initialBlocks,
       squares: initialSquares,
       selectedBlockId: null,
@@ -126,7 +155,7 @@ export default function App() {
       lastMove: null,
     });
     setShowSettings(false);
-  }, [n, p2Type, startingPlayer]);
+  }, [n, mode]);
 
   // Handle Block Selection
   const selectBlock = useCallback((id: string) => {
@@ -170,7 +199,7 @@ export default function App() {
           blockCount: s.blockCount + 1 
         } : s);
         
-        const nextPlayer = prev.currentPlayer === 'player1' ? 'player2' : 'player1';
+        const nextPlayer = prev.mode === 'alone' ? 'player1' : (prev.currentPlayer === 'player1' ? 'player2' : 'player1');
 
         return {
           ...prev,
@@ -187,7 +216,7 @@ export default function App() {
           },
           gameOver: allPlaced,
           lastMove: { i: block.i, j: block.j, product: block.product, blockId: block.id },
-          history: [...prev.history, `${prev.currentPlayer} placed ${block.id} on ${square.value} (${isBonus ? '+1 pt' : '0 pt'})`]
+          history: [...prev.history, `${prev.players[prev.currentPlayer].name} moved`]
         };
       });
 
@@ -199,6 +228,10 @@ export default function App() {
           colors: ['#0000FF', '#FF0000', '#FFFF00', '#00FFFF', '#FF00FF', '#00FF00']
         });
       }
+    } else {
+      // Incorrect Placement - Flash Red
+      setErrorSquareId(squareId);
+      setTimeout(() => setErrorSquareId(null), 400);
     }
   }, [gameState]);
 
@@ -216,35 +249,32 @@ export default function App() {
       const lastMove = gameState.lastMove;
       const candidates: BlockData[] = [];
       
-      // (1) Mirror Strategy
-      if (lastMove && lastMove.i !== lastMove.j) {
-        const mirrorId = `${lastMove.j}x${lastMove.i}`;
-        const mirrorBlock = availableBlocks.find(b => b.id === mirrorId);
-        if (mirrorBlock) candidates.push(mirrorBlock);
-        
-        // Find any other block with same product
-        const sameProductBlocks = availableBlocks.filter(b => b.product === lastMove.product && b.id !== mirrorId);
-        candidates.push(...sameProductBlocks);
-      } 
-      
-      // (2) Diagonal Strategy
-      if (lastMove && lastMove.i === lastMove.j) {
-        const diagonals = availableBlocks.filter(b => b.i === b.j);
-        candidates.push(...diagonals);
-        
-        const diagonalSquares = Array.from({ length: gameState.n }, (_, i) => (i + 1) * (i + 1));
-        const blocksForDiagonalSquares = availableBlocks.filter(b => diagonalSquares.includes(b.product) && b.i !== b.j);
-        candidates.push(...blocksForDiagonalSquares);
+      if (lastMove) {
+        // (1) If opponent played a square (d,d), react with another square (e,e) if possible
+        if (lastMove.i === lastMove.j) {
+          const availableSquares = availableBlocks.filter(b => b.i === b.j);
+          if (availableSquares.length > 0) {
+            candidates.push(...availableSquares);
+          }
+        }
+
+        // (2) React to (i,j) with another (k,l) such that k*l = i*j
+        const sameProductBlocks = availableBlocks.filter(b => b.product === lastMove.product);
+        if (sameProductBlocks.length > 0) {
+          // Add all same-product blocks. Picking randomly from these is "less transparent" than always mirroring.
+          candidates.push(...sameProductBlocks);
+        }
       }
 
-      // If we have strategic candidates, pick one randomly (less transparent)
-      // Otherwise, pick a diagonal or a random block
-      if (candidates.length > 0 && Math.random() > 0.1) {
+      // To be less transparent, we pick from strategic candidates 85% of the time.
+      // 15% of the time we pick a random block to mask the strategy.
+      if (candidates.length > 0 && Math.random() > 0.15) {
         chosenBlock = candidates[Math.floor(Math.random() * candidates.length)];
       } else {
-        const diagonals = availableBlocks.filter(b => b.i === b.j);
-        if (diagonals.length > 0 && Math.random() > 0.3) {
-          chosenBlock = diagonals[Math.floor(Math.random() * diagonals.length)];
+        // Default: pick a square if available (to get rid of odd sets), else random
+        const availableSquares = availableBlocks.filter(b => b.i === b.j);
+        if (availableSquares.length > 0 && Math.random() > 0.2) {
+          chosenBlock = availableSquares[Math.floor(Math.random() * availableSquares.length)];
         } else {
           chosenBlock = availableBlocks[Math.floor(Math.random() * availableBlocks.length)];
         }
@@ -259,34 +289,33 @@ export default function App() {
   }, [gameState, selectBlock, selectSquare]);
 
   // Render Settings
-    if (showSettings) {
+  if (showSettings) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 font-sans bg-[var(--color-pure-black)]">
+      <div className="min-h-screen flex items-center justify-center p-4 font-sans bg-[var(--color-bg-main)]">
         <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-[var(--color-wood-modal)] rounded-[3rem] shadow-2xl p-10 max-w-md w-full border-4 border-[var(--color-pure-white)]/20"
-          style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/wood-pattern.png")' }}
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-[var(--color-bg-secondary)] rounded-2xl shadow-2xl p-8 max-w-md w-full border border-[var(--color-gray-700)]"
         >
-          <div className="flex items-center gap-4 mb-10">
-            <div className="bg-[var(--color-pure-yellow)] p-4 rounded-2xl shadow-xl border-t-2 border-[var(--color-pure-white)]/40">
-              <Trophy className="text-[var(--color-pure-black)] w-8 h-8" />
+          <div className="flex items-center gap-4 mb-8">
+            <div className="bg-[var(--color-pure-red)] p-3 rounded-lg">
+              <Trophy className="text-[var(--color-pure-white)] w-6 h-6" />
             </div>
-            <h1 className="text-3xl font-black text-[var(--color-pure-white)] tracking-tight leading-tight drop-shadow-lg">Multiplication Quest</h1>
+            <h1 className="text-2xl font-bold text-[var(--color-pure-white)]">Multiplication Quest</h1>
           </div>
 
-          <div className="space-y-8">
+          <div className="space-y-6">
             <div>
-              <label className="block text-xs font-black text-[var(--color-pure-yellow)] uppercase tracking-[0.2em] mb-4">Board Size (N)</label>
-              <div className="grid grid-cols-5 gap-2">
-                {Array.from({ length: MAX_N - MIN_N + 1 }, (_, i) => MIN_N + i).map(val => (
+              <label className="block text-xs font-bold text-[var(--color-gray-500)] uppercase tracking-widest mb-3">Board Size (N)</label>
+              <div className="grid grid-cols-4 gap-2">
+                {[7, 8, 9, 10, 11, 12, 13].map(val => (
                   <button
                     key={val}
                     onClick={() => setN(val)}
-                    className={`py-3 rounded-xl font-black transition-all border-2 text-sm ${
+                    className={`py-2 rounded-lg font-bold transition-all border ${
                       n === val 
-                        ? 'bg-[var(--color-pure-yellow)] border-[var(--color-pure-white)] text-[var(--color-pure-black)] shadow-xl scale-105' 
-                        : 'bg-[var(--color-pure-black)]/40 border-[var(--color-pure-white)]/10 text-[var(--color-pure-white)] hover:bg-[var(--color-pure-black)]/60'
+                        ? 'bg-[var(--color-pure-blue)] border-[var(--color-pure-blue)] text-[var(--color-pure-white)]' 
+                        : 'bg-transparent border-[var(--color-gray-700)] text-[var(--color-gray-300)] hover:border-[var(--color-gray-500)]'
                     }`}
                   >
                     {val}
@@ -296,62 +325,34 @@ export default function App() {
             </div>
 
             <div>
-              <label className="block text-xs font-black text-[var(--color-pure-yellow)] uppercase tracking-[0.2em] mb-4">Opponent</label>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setP2Type('ai')}
-                  className={`flex-1 py-4 px-4 rounded-xl font-black flex items-center justify-center gap-2 transition-all border-2 ${
-                    p2Type === 'ai' 
-                      ? 'bg-[var(--color-pure-yellow)] border-[var(--color-pure-white)] text-[var(--color-pure-black)] shadow-xl scale-105' 
-                      : 'bg-[var(--color-pure-black)]/40 border-[var(--color-pure-white)]/10 text-[var(--color-pure-white)] hover:bg-[var(--color-pure-black)]/60'
-                  }`}
-                >
-                  <Cpu size={20} /> Computer
-                </button>
-                <button
-                  onClick={() => setP2Type('human')}
-                  className={`flex-1 py-4 px-4 rounded-xl font-black flex items-center justify-center gap-2 transition-all border-2 ${
-                    p2Type === 'human' 
-                      ? 'bg-[var(--color-pure-yellow)] border-[var(--color-pure-white)] text-[var(--color-pure-black)] shadow-xl scale-105' 
-                      : 'bg-[var(--color-pure-black)]/40 border-[var(--color-pure-white)]/10 text-[var(--color-pure-white)] hover:bg-[var(--color-pure-black)]/60'
-                  }`}
-                >
-                  <User size={20} /> Human
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-black text-[var(--color-pure-yellow)] uppercase tracking-[0.2em] mb-4">Who Starts?</label>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setStartingPlayer('player1')}
-                  className={`flex-1 py-4 px-4 rounded-xl font-black flex items-center justify-center gap-2 transition-all border-2 ${
-                    startingPlayer === 'player1' 
-                      ? 'bg-[var(--color-pure-yellow)] border-[var(--color-pure-white)] text-[var(--color-pure-black)] shadow-xl scale-105' 
-                      : 'bg-[var(--color-pure-black)]/40 border-[var(--color-pure-white)]/10 text-[var(--color-pure-white)] hover:bg-[var(--color-pure-black)]/60'
-                  }`}
-                >
-                  <User size={20} /> Me
-                </button>
-                <button
-                  onClick={() => setStartingPlayer('player2')}
-                  className={`flex-1 py-4 px-4 rounded-xl font-black flex items-center justify-center gap-2 transition-all border-2 ${
-                    startingPlayer === 'player2' 
-                      ? 'bg-[var(--color-pure-yellow)] border-[var(--color-pure-white)] text-[var(--color-pure-black)] shadow-xl scale-105' 
-                      : 'bg-[var(--color-pure-black)]/40 border-[var(--color-pure-white)]/10 text-[var(--color-pure-white)] hover:bg-[var(--color-pure-black)]/60'
-                  }`}
-                >
-                  {p2Type === 'ai' ? <Cpu size={20} /> : <User size={20} />} Opponent
-                </button>
+              <label className="block text-xs font-bold text-[var(--color-gray-500)] uppercase tracking-widest mb-3">Game Mode</label>
+              <div className="grid grid-cols-1 gap-2">
+                {[
+                  { id: 'alone', label: 'Play Alone (Exercise)', icon: <User size={18} /> },
+                  { id: 'human-human', label: 'Human vs Human', icon: <User size={18} /> },
+                  { id: 'computer-human', label: 'Computer vs Human (AI Starts)', icon: <Cpu size={18} /> },
+                  { id: 'human-computer', label: 'Human vs Computer (You Start)', icon: <Cpu size={18} /> }
+                ].map(m => (
+                  <button
+                    key={m.id}
+                    onClick={() => setMode(m.id as GameMode)}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-all border ${
+                      mode === m.id 
+                        ? 'bg-[var(--color-pure-blue)] border-[var(--color-pure-blue)] text-[var(--color-pure-white)]' 
+                        : 'bg-transparent border-[var(--color-gray-700)] text-[var(--color-gray-300)] hover:border-[var(--color-gray-500)]'
+                    }`}
+                  >
+                    {m.icon} {m.label}
+                  </button>
+                ))}
               </div>
             </div>
 
             <button
               onClick={initGame}
-              className="w-full bg-[var(--color-pure-magenta)] hover:bg-[var(--color-pure-red)] text-[var(--color-pure-white)] py-5 rounded-2xl font-black text-xl shadow-2xl transition-all flex items-center justify-center gap-3 mt-6 border-t-4 border-[var(--color-pure-white)]/30"
+              className="w-full bg-[var(--color-pure-green)] hover:opacity-90 text-[var(--color-pure-black)] py-4 rounded-lg font-bold text-lg transition-all flex items-center justify-center gap-2 mt-4"
             >
-              Start Adventure <ChevronRight size={24} />
+              Start Game <ChevronRight size={20} />
             </button>
           </div>
         </motion.div>
@@ -367,171 +368,97 @@ export default function App() {
   const selectedBlock = gameState.blocks.find(b => b.id === gameState.selectedBlockId);
 
   return (
-    <div className="min-h-screen p-4 md:p-8 font-sans text-[var(--color-pure-white)] selection:bg-[var(--color-pure-cyan)]/40">
+    <div className="min-h-screen p-4 md:p-8 font-sans text-[var(--color-text-main)]">
       {/* Header */}
-      <div className="max-w-7xl mx-auto mb-8">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-4">
-            <div className="bg-[var(--color-highlight-p1)] p-4 rounded-2xl shadow-xl border-t border-[var(--color-pure-white)]/30">
-              <Trophy className="text-[var(--color-pure-black)] w-10 h-10" />
-            </div>
-            <div>
-              <h1 className="text-4xl font-black text-[var(--color-pure-white)] tracking-tight drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">Multiplication Quest</h1>
-              <p className="text-[var(--color-pure-yellow)] font-bold uppercase tracking-widest text-xs">Strategic Arithmetic Adventure</p>
-            </div>
+      <div className="max-w-7xl mx-auto mb-8 flex justify-between items-center">
+        <div className="flex items-center gap-4">
+          <div className="bg-[var(--color-pure-red)] p-3 rounded-lg">
+            <Trophy className="text-[var(--color-pure-white)] w-6 h-6" />
           </div>
+          <h1 className="text-xl font-bold tracking-tight">Multiplication Quest</h1>
+        </div>
 
-          <div className="flex gap-2">
+        <div className="flex gap-2">
+          <div className="flex items-center bg-[var(--color-bg-secondary)] rounded-lg border border-[var(--color-gray-700)] overflow-hidden">
             <button 
-              onClick={() => setShowStrategy(!showStrategy)}
-              className={`p-3 rounded-xl border-2 transition-all shadow-lg flex items-center gap-2 ${
-                showStrategy ? 'bg-[var(--color-pure-white)] border-[var(--color-pure-white)] text-[var(--color-pure-black)]' : 'bg-[var(--color-pure-gray-dark)]/60 border-[var(--color-pure-white)]/20 text-[var(--color-pure-white)] hover:bg-[var(--color-pure-gray)]'
-              }`}
-              title="Strategy Guide"
+              onClick={() => setZoom(prev => Math.max(0.5, prev - 0.1))}
+              className="p-2 hover:bg-[var(--color-gray-700)] text-[var(--color-text-main)] transition-all border-r border-[var(--color-gray-700)]"
             >
-              <Lightbulb size={20} />
-              <span className="hidden md:inline font-bold text-sm">Strategy</span>
-            </button>
-            <div className="flex items-center bg-[var(--color-pure-gray-dark)]/60 rounded-xl border-2 border-[var(--color-pure-white)]/20 shadow-lg overflow-hidden">
-              <button 
-                onClick={() => setZoom(prev => Math.max(0.5, prev - 0.1))}
-                className="p-3 hover:bg-[var(--color-pure-gray)] text-[var(--color-pure-white)] transition-all border-r border-[var(--color-pure-white)]/20"
-                title="Zoom Out"
-              >
-                <ZoomOut size={18} />
-              </button>
-              <button 
-                onClick={() => setZoom(1)}
-                className="p-3 hover:bg-[var(--color-pure-gray)] text-[var(--color-pure-white)] transition-all border-r border-[var(--color-pure-white)]/20"
-                title="Reset Zoom"
-              >
-                <Maximize size={18} />
-              </button>
-              <button 
-                onClick={() => setZoom(prev => Math.min(2, prev + 0.1))}
-                className="p-3 hover:bg-[var(--color-pure-gray)] text-[var(--color-pure-white)] transition-all"
-                title="Zoom In"
-              >
-                <ZoomIn size={18} />
-              </button>
-            </div>
-            <button 
-              onClick={() => setShowSettings(true)}
-              className="p-3 bg-[var(--color-pure-gray-dark)]/60 hover:bg-[var(--color-pure-gray)] rounded-xl border-2 border-[var(--color-pure-white)]/20 text-[var(--color-pure-white)] transition-all shadow-lg"
-              title="Settings"
-            >
-              <Settings size={20} />
+              <ZoomOut size={16} />
             </button>
             <button 
-              onClick={initGame}
-              className="p-3 bg-[var(--color-pure-gray-dark)]/60 hover:bg-[var(--color-pure-gray)] rounded-xl border-2 border-[var(--color-pure-white)]/20 text-[var(--color-pure-white)] transition-all shadow-lg"
-              title="Restart"
+              onClick={() => setZoom(1)}
+              className="p-2 hover:bg-[var(--color-gray-700)] text-[var(--color-text-main)] transition-all border-r border-[var(--color-gray-700)]"
             >
-              <RotateCcw size={20} />
+              <Maximize size={16} />
+            </button>
+            <button 
+              onClick={() => setZoom(prev => Math.min(2, prev + 0.1))}
+              className="p-2 hover:bg-[var(--color-gray-700)] text-[var(--color-text-main)] transition-all"
+            >
+              <ZoomIn size={16} />
             </button>
           </div>
+          <button 
+            onClick={() => setShowSettings(true)}
+            className="p-2 bg-[var(--color-bg-secondary)] hover:bg-[var(--color-gray-700)] rounded-lg border border-[var(--color-gray-700)] text-[var(--color-text-main)]"
+          >
+            <Settings size={18} />
+          </button>
+          <button 
+            onClick={initGame}
+            className="p-2 bg-[var(--color-bg-secondary)] hover:bg-[var(--color-gray-700)] rounded-lg border border-[var(--color-gray-700)] text-[var(--color-text-main)]"
+          >
+            <RotateCcw size={18} />
+          </button>
         </div>
       </div>
 
       {/* Scoreboard */}
-      <div className="max-w-7xl mx-auto grid grid-cols-2 gap-4 mb-8">
-        <div className={`p-6 rounded-3xl transition-all border-4 ${isP1Turn ? 'bg-[var(--color-highlight-p1)] border-[var(--color-pure-white)] shadow-2xl scale-105' : 'bg-[var(--color-pure-black)]/40 border-transparent opacity-50'}`}>
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-xl ${isP1Turn ? 'bg-[var(--color-pure-white)] text-[var(--color-pure-black)]' : 'bg-[var(--color-pure-gray-dark)] text-[var(--color-pure-yellow)]'}`}>
-                <User size={20} />
-              </div>
-              <span className={`font-black text-lg uppercase tracking-tight ${isP1Turn ? 'text-[var(--color-pure-black)]' : 'text-[var(--color-pure-white)]'}`}>{p1.name}</span>
+      <div className={`max-w-7xl mx-auto grid gap-4 mb-8 ${gameState.mode === 'alone' ? 'grid-cols-1' : 'grid-cols-2'}`}>
+        <div className={`p-4 rounded-xl border transition-all ${isP1Turn ? 'bg-[var(--color-bg-tertiary)] border-[var(--color-pure-blue)]' : 'bg-[var(--color-bg-secondary)] border-[var(--color-gray-700)] opacity-60'}`}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {p1.type === 'ai' ? <Cpu size={16} /> : <User size={16} />}
+              <span className="font-bold text-sm uppercase">{gameState.mode === 'alone' ? 'Exercise Mode' : p1.name}</span>
             </div>
-            <span className={`text-4xl font-black tabular-nums ${isP1Turn ? 'text-[var(--color-pure-black)]' : 'text-[var(--color-pure-white)]'}`}>{p1.score}</span>
-          </div>
-          <div className="h-2 bg-[var(--color-pure-black)]/20 rounded-full overflow-hidden">
-            <motion.div 
-              className="h-full bg-[var(--color-pure-white)]"
-              animate={{ width: isP1Turn ? '100%' : '0%' }}
-            />
+            <span className="text-2xl font-bold">{p1.score}</span>
           </div>
         </div>
 
-        <div className={`p-6 rounded-3xl transition-all border-4 ${!isP1Turn ? 'bg-[var(--color-highlight-p2)] border-[var(--color-pure-white)] shadow-2xl scale-105' : 'bg-[var(--color-pure-black)]/40 border-transparent opacity-50'}`}>
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-xl ${!isP1Turn ? 'bg-[var(--color-pure-white)] text-[var(--color-pure-black)]' : 'bg-[var(--color-pure-gray-dark)] text-[var(--color-pure-magenta)]'}`}>
-                {p2.type === 'ai' ? <Cpu size={20} /> : <User size={20} />}
+        {gameState.mode !== 'alone' && (
+          <div className={`p-4 rounded-xl border transition-all ${!isP1Turn ? 'bg-[var(--color-bg-tertiary)] border-[var(--color-pure-magenta)]' : 'bg-[var(--color-bg-secondary)] border-[var(--color-gray-700)] opacity-60'}`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {p2.type === 'ai' ? <Cpu size={16} /> : <User size={16} />}
+                <span className="font-bold text-sm uppercase">{p2.name}</span>
               </div>
-              <span className={`font-black text-lg uppercase tracking-tight ${!isP1Turn ? 'text-[var(--color-pure-black)]' : 'text-[var(--color-pure-white)]'}`}>{p2.name}</span>
+              <span className="text-2xl font-bold">{p2.score}</span>
             </div>
-            <span className={`text-4xl font-black tabular-nums ${!isP1Turn ? 'text-[var(--color-pure-black)]' : 'text-[var(--color-pure-white)]'}`}>{p2.score}</span>
           </div>
-          <div className="h-2 bg-[var(--color-pure-black)]/20 rounded-full overflow-hidden">
-            <motion.div 
-              className="h-full bg-[var(--color-pure-white)]"
-              animate={{ width: !isP1Turn ? '100%' : '0%' }}
-            />
-          </div>
-        </div>
+        )}
       </div>
 
-      {/* Strategy Guide */}
-      <AnimatePresence>
-        {showStrategy && (
-          <motion.div 
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="max-w-7xl mx-auto mb-8 overflow-hidden"
-          >
-            <div className="bg-[var(--color-pure-yellow)]/10 border border-[var(--color-pure-yellow)]/20 rounded-3xl p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h3 className="text-[var(--color-pure-yellow)] font-bold flex items-center gap-2 mb-2">
-                  <Sparkles size={18} /> The Mirror Strategy
-                </h3>
-                <p className="text-[var(--color-pure-white)]/80 text-sm leading-relaxed">
-                  If your opponent places a block like <span className="font-bold">2x6</span>, try to find the mirror block <span className="font-bold">6x2</span>. 
-                  This helps you control the squares and sets you up for bonus points!
-                </p>
-              </div>
-              <div>
-                <h3 className="text-[var(--color-pure-yellow)] font-bold flex items-center gap-2 mb-2">
-                  <Trophy size={18} /> The Diagonal Secret
-                </h3>
-                <p className="text-[var(--color-pure-white)]/80 text-sm leading-relaxed">
-                  Diagonal blocks (like <span className="font-bold">4x4</span> or <span className="font-bold">9x9</span>) are special. 
-                  They are the only ones that land on squares with an odd number of possible combinations. 
-                  Placing these early can be the key to winning!
-                </p>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* Main Game Area */}
-      <div className="max-w-7xl mx-auto overflow-auto custom-scrollbar">
+      <div className="max-w-7xl mx-auto">
         <div 
-          className="grid grid-cols-1 lg:grid-cols-[1fr_1.5fr] gap-12 p-8 wood-panel rounded-[3rem]"
+          className="grid grid-cols-1 lg:grid-cols-2 gap-8"
           style={{ 
             transform: `scale(${zoom})`, 
-            transformOrigin: 'top center',
-            width: zoom > 1 ? `${zoom * 100}%` : '100%'
+            transformOrigin: 'top center'
           }}
         >
           {/* Left: The Box */}
-          <div className="space-y-6">
+          <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-black text-[var(--color-pure-yellow)] uppercase tracking-tighter flex items-center gap-3">
-                <div className="w-8 h-8 bg-[var(--color-pure-yellow)] rounded-lg flex items-center justify-center text-[var(--color-pure-black)]">
-                  <RotateCcw size={18} />
-                </div>
-                The Box
-              </h2>
-              <span className="bg-[var(--color-pure-black)]/40 px-4 py-1.5 rounded-full text-xs font-bold text-[var(--color-pure-yellow)] uppercase tracking-widest border border-[var(--color-pure-white)]/5">
-                {gameState.blocks.filter(b => !b.placed).length} Blocks Left
+              <h2 className="text-sm font-bold uppercase tracking-widest text-[var(--color-gray-500)]">The Box</h2>
+              <span className="text-xs font-bold text-[var(--color-gray-500)]">
+                {gameState.blocks.filter(b => !b.placed).length} Blocks
               </span>
             </div>
             
             <div 
-              className="grid gap-3 bg-black/30 p-4 rounded-3xl border border-white/5 shadow-inner"
+              className="grid gap-1 bg-[var(--color-bg-secondary)] p-2 rounded-lg border border-[var(--color-gray-700)]"
               style={{ gridTemplateColumns: `repeat(${gameState.n}, minmax(0, 1fr))` }}
             >
               {gameState.blocks.map(block => (
@@ -540,62 +467,26 @@ export default function App() {
                   disabled={block.placed || (gameState.players[gameState.currentPlayer].type === 'ai')}
                   onClick={() => selectBlock(block.id)}
                   className={`
-                    aspect-square flex items-center justify-center text-[10px] md:text-xs font-black rounded-lg transition-all relative
+                    aspect-square flex items-center justify-center text-[10px] font-bold transition-all border
                     ${block.placed ? 
-                      (gameState.lastMove?.blockId === block.id ? 'bg-[var(--color-pure-red)] text-[var(--color-pure-white)] shadow-2xl ring-4 ring-[var(--color-pure-white)] z-10 animate-pulse' : 'wood-slot text-transparent') 
+                      (gameState.lastMove?.blockId === block.id ? 'bg-[var(--color-last-move)] border-[var(--color-pure-white)] text-[var(--color-pure-white)] z-10' : 'bg-[var(--color-bg-main)] border-[var(--color-gray-900)] text-transparent') 
                       : 
-                      gameState.selectedBlockId === block.id ? 'bg-[var(--color-highlight-select)] text-[var(--color-pure-black)] shadow-2xl scale-110 z-10 ring-4 ring-[var(--color-pure-white)]' : 
-                      'wood-tile-black text-[var(--color-pure-yellow)] ring-1 ring-[var(--color-pure-white)]/5 drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] hover:scale-105 active:scale-95'}
+                      gameState.selectedBlockId === block.id ? 'bg-[var(--color-pure-cyan)] border-[var(--color-pure-white)] text-[var(--color-pure-black)] scale-110 z-10 shadow-xl' : 
+                      'bg-[var(--color-block-unused)] border-[var(--color-pure-blue)]/30 text-[var(--color-pure-white)] hover:bg-[var(--color-pure-blue)]/80'}
                   `}
                 >
                   {!block.placed || gameState.lastMove?.blockId === block.id ? block.id : ''}
-                  {gameState.lastMove?.blockId === block.id && (
-                    <span className="absolute -top-2 -right-2 bg-[var(--color-pure-red)] text-[var(--color-pure-white)] text-[8px] px-1.5 py-0.5 rounded-full font-black shadow-sm z-20">
-                      LAST
-                    </span>
-                  )}
                 </button>
               ))}
             </div>
-
-            {/* Active Block Indicator */}
-            <AnimatePresence>
-              {selectedBlock && (
-                <motion.div 
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  className="bg-[var(--color-highlight-select)] text-[var(--color-pure-black)] p-6 rounded-3xl shadow-2xl flex items-center justify-between border-t-4 border-[var(--color-pure-white)]/50"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="bg-[var(--color-pure-black)]/20 p-3 rounded-2xl">
-                      <HelpCircle size={24} />
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-black text-[var(--color-pure-black)]/60 uppercase tracking-widest">Active Block</p>
-                      <p className="text-3xl font-black">{selectedBlock.id}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-[10px] font-black text-[var(--color-pure-black)]/60 uppercase tracking-widest">Target Product</p>
-                    <p className="text-3xl font-black">{selectedBlock.product}</p>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
           </div>
 
           {/* Right: Field Board */}
-          <div className="space-y-6">
-            <h2 className="text-2xl font-black text-[var(--color-pure-yellow)] uppercase tracking-tighter flex items-center gap-3">
-              <div className="w-8 h-8 bg-[var(--color-pure-red)] rounded-lg flex items-center justify-center text-[var(--color-pure-white)]">
-                <Trophy size={18} />
-              </div>
-              The Field
-            </h2>
+          <div className="space-y-4">
+            <h2 className="text-sm font-bold uppercase tracking-widest text-[var(--color-gray-500)]">The Field</h2>
             
             <div 
-              className="grid gap-2 bg-[var(--color-pure-black)]/40 p-4 rounded-3xl border-2 border-[var(--color-pure-white)]/10"
+              className="grid gap-1 bg-[var(--color-bg-secondary)] p-2 rounded-lg border border-[var(--color-gray-700)]"
               style={{ 
                 gridTemplateColumns: `repeat(${gameState.n}, minmax(0, 1fr))` 
               }}
@@ -606,10 +497,11 @@ export default function App() {
                   disabled={gameState.players[gameState.currentPlayer].type === 'ai'}
                   onClick={() => selectSquare(square.id)}
                   className={`
-                    aspect-square flex items-center justify-center text-[10px] md:text-sm font-black rounded-lg transition-all
-                    ${square.highlighted ? 
-                      'bg-[var(--color-highlight-success)] text-[var(--color-pure-black)] shadow-2xl scale-105 border-t-2 border-[var(--color-pure-white)]/40' : 
-                      'wood-slot text-[var(--color-pure-white)] font-bold hover:text-[var(--color-pure-cyan)] hover:bg-[var(--color-pure-black)]/60'}
+                    aspect-square flex items-center justify-center text-[10px] font-bold transition-all border
+                    ${square.id === errorSquareId ? 'bg-[var(--color-pure-red)] border-[var(--color-pure-white)] text-[var(--color-pure-white)] z-20 scale-110' : 
+                      square.highlighted ? 
+                      'bg-[var(--color-square-used)] border-[var(--color-pure-green)]/30 text-black' : 
+                      'bg-[var(--color-bg-main)] border-[var(--color-gray-900)] text-[var(--color-gray-500)] hover:text-[var(--color-pure-white)] hover:border-[var(--color-gray-700)]'}
                   `}
                 >
                   {square.value}
@@ -620,56 +512,18 @@ export default function App() {
         </div>
       </div>
 
-      {/* Footer Info */}
-      <div className="max-w-7xl mx-auto mt-8 grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div className="bg-[var(--color-pure-black)]/40 p-8 rounded-[2.5rem] shadow-2xl border-2 border-[var(--color-pure-white)]/10 md:col-span-2">
-          <h3 className="text-sm font-black text-[var(--color-pure-yellow)] uppercase tracking-widest mb-6 flex items-center gap-2">
-            <History size={16} /> Game Log
+      {/* Game Log */}
+      <div className="max-w-7xl mx-auto mt-8">
+        <div className="bg-[var(--color-bg-secondary)] p-4 rounded-lg border border-[var(--color-gray-700)]">
+          <h3 className="text-xs font-bold text-[var(--color-gray-500)] uppercase tracking-widest mb-4 flex items-center gap-2">
+            <History size={14} /> Log
           </h3>
-          <div className="h-40 overflow-y-auto space-y-3 pr-4 custom-scrollbar">
-            {gameState.history.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-[var(--color-pure-white)]/20">
-                <Info size={32} className="mb-2 opacity-20" />
-                <p className="italic text-sm">Waiting for the first move...</p>
+          <div className="h-24 overflow-y-auto space-y-1 pr-2 custom-scrollbar text-[10px] font-mono">
+            {gameState.history.slice().reverse().map((log, i) => (
+              <div key={i} className="text-[var(--color-gray-500)] border-b border-[var(--color-gray-900)] pb-1">
+                {log}
               </div>
-            ) : (
-              gameState.history.slice().reverse().map((log, i) => (
-                <motion.div 
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  key={i} 
-                  className="flex items-center gap-4 text-sm text-[var(--color-pure-white)] border-b border-[var(--color-pure-white)]/10 pb-3"
-                >
-                  <div className={`w-3 h-3 rounded-full shrink-0 ${log.includes('player1') ? 'bg-[var(--color-pure-yellow)] shadow-[0_0_12px_rgba(255,255,0,0.8)]' : 'bg-[var(--color-pure-magenta)] shadow-[0_0_12px_rgba(255,0,255,0.8)]'}`}></div>
-                  <span className="font-mono text-[10px] text-[var(--color-pure-white)]/40">#{gameState.history.length - i}</span>
-                  <span className="flex-1 font-bold">{log}</span>
-                </motion.div>
-              ))
-            )}
-          </div>
-        </div>
-
-        <div className="bg-[var(--color-pure-black)]/40 p-8 rounded-[2.5rem] shadow-2xl border-2 border-[var(--color-pure-white)]/10">
-          <h3 className="text-sm font-black text-[var(--color-pure-yellow)] uppercase tracking-widest mb-4 flex items-center gap-2">
-            <Settings size={16} /> Game Info
-          </h3>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-[var(--color-pure-white)]/60 font-bold">Board Size</span>
-              <span className="font-black text-[var(--color-pure-white)]">{gameState.n}x{gameState.n}</span>
-            </div>
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-[var(--color-pure-white)]/60 font-bold">Opponent</span>
-              <span className="font-black text-[var(--color-pure-white)]">{gameState.players.player2.type === 'ai' ? 'Computer' : 'Human'}</span>
-            </div>
-            <div className="pt-4 border-t border-[var(--color-pure-white)]/10">
-              <button 
-                onClick={() => setShowSettings(true)}
-                className="w-full py-3 bg-[var(--color-pure-gray)] hover:bg-[var(--color-pure-gray-light)] text-[var(--color-pure-white)] rounded-xl font-black transition-all shadow-xl flex items-center justify-center gap-2 border-t border-[var(--color-pure-white)]/20"
-              >
-                <Settings size={18} /> New Game
-              </button>
-            </div>
+            ))}
           </div>
         </div>
       </div>
@@ -680,36 +534,35 @@ export default function App() {
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="fixed inset-0 bg-[var(--color-pure-black)]/80 backdrop-blur-md z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-[var(--color-pure-black)]/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
           >
             <motion.div 
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              className="bg-[var(--color-wood-modal)] rounded-[3rem] p-10 max-w-sm w-full text-center shadow-2xl border-4 border-[var(--color-pure-white)]/20"
-              style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/wood-pattern.png")' }}
+              initial={{ scale: 0.95 }}
+              animate={{ scale: 1 }}
+              className="bg-[var(--color-bg-secondary)] rounded-2xl p-8 max-w-sm w-full text-center shadow-2xl border border-[var(--color-gray-700)]"
             >
-              <div className="w-24 h-24 bg-[var(--color-pure-yellow)] text-[var(--color-pure-black)] rounded-full flex items-center justify-center mx-auto mb-8 shadow-2xl ring-4 ring-[var(--color-pure-white)]/20">
-                <Trophy size={48} />
+              <div className="w-16 h-16 bg-[var(--color-pure-yellow)] text-[var(--color-pure-black)] rounded-full flex items-center justify-center mx-auto mb-6">
+                <Trophy size={32} />
               </div>
-              <h2 className="text-4xl font-black text-[var(--color-pure-white)] mb-2 drop-shadow-lg">Game Over!</h2>
-              <p className="text-[var(--color-pure-yellow)] mb-10 font-black uppercase tracking-widest text-sm">
+              <h2 className="text-2xl font-bold text-[var(--color-pure-white)] mb-2">Game Over</h2>
+              <p className="text-[var(--color-gray-300)] mb-6 font-bold">
                 {p1.score > p2.score ? `${p1.name} wins!` : p2.score > p1.score ? `${p2.name} wins!` : "It's a draw!"}
               </p>
               
-              <div className="grid grid-cols-2 gap-4 mb-10">
-                <div className="bg-[var(--color-pure-black)]/40 p-6 rounded-3xl border-2 border-[var(--color-pure-white)]/10">
-                  <p className="text-[10px] font-black text-[var(--color-pure-white)]/60 uppercase tracking-[0.2em] mb-1">{p1.name}</p>
-                  <p className="text-3xl font-black text-[var(--color-pure-yellow)]">{p1.score}</p>
+              <div className="grid grid-cols-2 gap-4 mb-8">
+                <div className="bg-[var(--color-bg-main)] p-4 rounded-lg border border-[var(--color-gray-700)]">
+                  <p className="text-[10px] font-bold text-[var(--color-gray-500)] uppercase mb-1">{p1.name}</p>
+                  <p className="text-xl font-bold">{p1.score}</p>
                 </div>
-                <div className="bg-[var(--color-pure-black)]/40 p-6 rounded-3xl border-2 border-[var(--color-pure-white)]/10">
-                  <p className="text-[10px] font-black text-[var(--color-pure-white)]/60 uppercase tracking-[0.2em] mb-1">{p2.name}</p>
-                  <p className="text-3xl font-black text-[var(--color-pure-magenta)]">{p2.score}</p>
+                <div className="bg-[var(--color-bg-main)] p-4 rounded-lg border border-[var(--color-gray-700)]">
+                  <p className="text-[10px] font-bold text-[var(--color-gray-500)] uppercase mb-1">{p2.name}</p>
+                  <p className="text-xl font-bold">{p2.score}</p>
                 </div>
               </div>
 
               <button
                 onClick={() => setShowSettings(true)}
-                className="w-full bg-[var(--color-pure-yellow)] hover:bg-[var(--color-pure-white)] text-[var(--color-pure-black)] py-5 rounded-2xl font-black text-xl shadow-2xl transition-all border-t-4 border-[var(--color-pure-white)]/40"
+                className="w-full bg-[var(--color-pure-blue)] text-[var(--color-pure-white)] py-3 rounded-lg font-bold transition-all"
               >
                 Play Again
               </button>

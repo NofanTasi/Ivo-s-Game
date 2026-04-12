@@ -4,78 +4,56 @@
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
   
-  --color-wood-dark: #1a0f08;
-  --color-wood-medium: #3d2616;
-  --color-wood-light: #8b5e3c;
-  --color-wood-grain: #a67c52;
-  --color-wood-paper: #fdf8f1;
-  --color-wood-modal: #2d1b0e;
+  --color-bg-main: #1a1a1a;
+  --color-bg-secondary: #2a2a2a;
+  --color-bg-tertiary: #3a3a3a;
   
-  /* Pure RGB */
-  --color-pure-red: #FF0000;
-  --color-pure-green: #00FF00;
-  --color-pure-blue: #0000FF;
+  /* Pure RGB (Softened slightly for UI) */
+  --color-pure-red: #ff4d4d;
+  --color-pure-green: #4dff4d;
+  --color-pure-blue: #4d4dff;
   
-  /* Pure CMY */
-  --color-pure-cyan: #00FFFF;
-  --color-pure-magenta: #FF00FF;
-  --color-pure-yellow: #FFFF00;
+  /* Pure CMY (Softened slightly for UI) */
+  --color-pure-cyan: #4dffff;
+  --color-pure-magenta: #ff4dff;
+  --color-pure-yellow: #ffff4d;
   
   /* Pure BW */
   --color-pure-black: #000000;
-  --color-pure-white: #FFFFFF;
+  --color-pure-white: #ffffff;
   
-  /* Pure Grays */
-  --color-pure-gray-light: #D3D3D3;
-  --color-pure-gray: #808080;
-  --color-pure-gray-dark: #404040;
+  /* Grayscale */
+  --color-gray-100: #f5f5f5;
+  --color-gray-300: #d4d4d4;
+  --color-gray-500: #737373;
+  --color-gray-700: #404040;
+  --color-gray-900: #171717;
 
-  /* High Contrast Highlights mapped to Pure Colors */
-  --color-highlight-p1: var(--color-pure-yellow);
-  --color-highlight-p2: var(--color-pure-magenta);
-  --color-highlight-select: var(--color-pure-cyan);
-  --color-highlight-success: var(--color-pure-green);
-  --color-contrast-text: var(--color-pure-white);
-  --color-contrast-dark: var(--color-pure-black);
+  /* Functional Mappings */
+  --color-block-unused: var(--color-pure-blue);
+  --color-square-used: var(--color-pure-green);
+  --color-last-move: var(--color-pure-red);
+  --color-text-main: var(--color-pure-white);
+  --color-text-muted: var(--color-gray-300);
 }
 
 @layer base {
   body {
-    @apply bg-[var(--color-wood-dark)] text-[var(--color-pure-black)];
-    background-image: 
-      repeating-linear-gradient(
-        45deg,
-        rgba(0,0,0,0.05) 0px,
-        rgba(0,0,0,0.05) 2px,
-        transparent 2px,
-        transparent 4px
-      ),
-      linear-gradient(to bottom, var(--color-wood-dark), var(--color-pure-black));
+    @apply bg-[var(--color-bg-main)] text-[var(--color-text-main)];
   }
 }
 
 @layer components {
-  .wood-panel {
-    @apply bg-[var(--color-wood-medium)] border-t border-[var(--color-pure-white)]/10 border-l border-[var(--color-pure-white)]/5 shadow-2xl;
-    background-image: url("https://www.transparenttextures.com/patterns/wood-pattern.png");
+  .game-panel {
+    @apply bg-[var(--color-bg-secondary)] border border-[var(--color-gray-700)] shadow-2xl;
   }
 
-  .wood-tile {
-    @apply bg-[var(--color-wood-light)] border-t-2 border-[var(--color-pure-white)]/40 border-l-2 border-[var(--color-pure-white)]/30 border-b-4 border-[var(--color-pure-black)]/50 border-r-4 border-[var(--color-pure-black)]/40 shadow-xl;
-    background-image: url("https://www.transparenttextures.com/patterns/wood-pattern.png");
+  .game-square {
+    @apply aspect-square flex items-center justify-center transition-all duration-200 border border-[var(--color-gray-700)];
   }
 
-  .wood-tile-black {
-    @apply bg-[var(--color-wood-dark)] border-t-2 border-[var(--color-pure-white)]/30 border-l-2 border-[var(--color-pure-white)]/20 border-b-4 border-[var(--color-pure-black)]/90 border-r-4 border-[var(--color-pure-black)]/80 shadow-2xl;
-    background-image: url("https://www.transparenttextures.com/patterns/wood-pattern.png");
-  }
-
-  .wood-slot {
-    @apply bg-[var(--color-pure-black)]/50 shadow-[inset_0_4px_16px_rgba(0,0,0,0.8)] border border-[var(--color-pure-white)]/10;
-  }
-
-  .wood-carved-text {
-    @apply text-[var(--color-wood-dark)] font-black drop-shadow-[0_1px_0_rgba(255,255,255,0.4)];
+  .game-button {
+    @apply px-6 py-3 rounded-lg font-bold transition-all active:scale-95 disabled:opacity-50;
   }
 }
 
@@ -89,5 +67,5 @@
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  @apply bg-[var(--color-wood-light)] rounded-full hover:bg-[var(--color-wood-grain)];
+  @apply bg-[var(--color-gray-700)] rounded-full hover:bg-[var(--color-gray-500)];
 }
