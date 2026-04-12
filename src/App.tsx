@@ -18,8 +18,12 @@ import {
   HelpCircle,
   ZoomIn,
   ZoomOut,
-  Maximize
+  Maximize,
+  Lightbulb,
+  Sparkles,
+  History
 } from 'lucide-react';
+import confetti from 'canvas-confetti';
 
 // --- Types ---
 
@@ -58,8 +62,8 @@ interface GameState {
 
 // --- Constants ---
 
-const MIN_N = 9;
-const MAX_N = 12;
+const MIN_N = 5;
+const MAX_N = 13;
 
 // --- Utilities ---
 
@@ -101,6 +105,7 @@ export default function App() {
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [showSettings, setShowSettings] = useState(true);
   const [zoom, setZoom] = useState(1);
+  const [showStrategy, setShowStrategy] = useState(false);
 
   // Initialize Game
   const initGame = useCallback(() => {
@@ -154,6 +159,8 @@ export default function App() {
       const isBonus = square.highlighted;
       const points = isBonus ? 1 : 0;
 
+      const allPlaced = gameState.blocks.filter(b => !b.placed).length === 1;
+
       setGameState(prev => {
         if (!prev) return null;
         const newBlocks = prev.blocks.map(b => b.id === block.id ? { ...b, placed: true } : b);
@@ -164,7 +171,6 @@ export default function App() {
         } : s);
         
         const nextPlayer = prev.currentPlayer === 'player1' ? 'player2' : 'player1';
-        const allPlaced = newBlocks.every(b => b.placed);
 
         return {
           ...prev,
@@ -184,6 +190,15 @@ export default function App() {
           history: [...prev.history, `${prev.currentPlayer} placed ${block.id} on ${square.value} (${isBonus ? '+1 pt' : '0 pt'})`]
         };
       });
+
+      if (allPlaced) {
+        confetti({
+          particleCount: 150,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ['#0000FF', '#FF0000', '#FFFF00', '#00FFFF', '#FF00FF', '#00FF00']
+        });
+      }
     }
   }, [gameState]);
 
@@ -244,98 +259,99 @@ export default function App() {
   }, [gameState, selectBlock, selectSquare]);
 
   // Render Settings
-  if (showSettings) {
+    if (showSettings) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-sans">
+      <div className="min-h-screen flex items-center justify-center p-4 font-sans bg-[var(--color-pure-black)]">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-3xl shadow-xl p-8 max-w-md w-full border border-slate-100"
+          className="bg-[var(--color-wood-modal)] rounded-[3rem] shadow-2xl p-10 max-w-md w-full border-4 border-[var(--color-pure-white)]/20"
+          style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/wood-pattern.png")' }}
         >
-          <div className="flex items-center gap-3 mb-8">
-            <div className="bg-indigo-600 p-3 rounded-2xl shadow-lg shadow-indigo-200">
-              <Trophy className="text-white w-8 h-8" />
+          <div className="flex items-center gap-4 mb-10">
+            <div className="bg-[var(--color-pure-yellow)] p-4 rounded-2xl shadow-xl border-t-2 border-[var(--color-pure-white)]/40">
+              <Trophy className="text-[var(--color-pure-black)] w-8 h-8" />
             </div>
-            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Multiplication Quest</h1>
+            <h1 className="text-3xl font-black text-[var(--color-pure-white)] tracking-tight leading-tight drop-shadow-lg">Multiplication Quest</h1>
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-8">
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-3">Board Size (N)</label>
-              <div className="flex gap-2">
-                {[9, 10, 11, 12].map(val => (
+              <label className="block text-xs font-black text-[var(--color-pure-yellow)] uppercase tracking-[0.2em] mb-4">Board Size (N)</label>
+              <div className="grid grid-cols-5 gap-2">
+                {Array.from({ length: MAX_N - MIN_N + 1 }, (_, i) => MIN_N + i).map(val => (
                   <button
                     key={val}
                     onClick={() => setN(val)}
-                    className={`flex-1 py-3 rounded-xl font-medium transition-all ${
+                    className={`py-3 rounded-xl font-black transition-all border-2 text-sm ${
                       n === val 
-                        ? 'bg-indigo-600 text-white shadow-md' 
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        ? 'bg-[var(--color-pure-yellow)] border-[var(--color-pure-white)] text-[var(--color-pure-black)] shadow-xl scale-105' 
+                        : 'bg-[var(--color-pure-black)]/40 border-[var(--color-pure-white)]/10 text-[var(--color-pure-white)] hover:bg-[var(--color-pure-black)]/60'
                     }`}
                   >
-                    {val}x{val}
+                    {val}
                   </button>
                 ))}
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-3">Opponent</label>
-              <div className="flex gap-2">
+              <label className="block text-xs font-black text-[var(--color-pure-yellow)] uppercase tracking-[0.2em] mb-4">Opponent</label>
+              <div className="flex gap-3">
                 <button
                   onClick={() => setP2Type('ai')}
-                  className={`flex-1 py-3 px-4 rounded-xl font-medium flex items-center justify-center gap-2 transition-all ${
+                  className={`flex-1 py-4 px-4 rounded-xl font-black flex items-center justify-center gap-2 transition-all border-2 ${
                     p2Type === 'ai' 
-                      ? 'bg-indigo-600 text-white shadow-md' 
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      ? 'bg-[var(--color-pure-yellow)] border-[var(--color-pure-white)] text-[var(--color-pure-black)] shadow-xl scale-105' 
+                      : 'bg-[var(--color-pure-black)]/40 border-[var(--color-pure-white)]/10 text-[var(--color-pure-white)] hover:bg-[var(--color-pure-black)]/60'
                   }`}
                 >
-                  <Cpu size={18} /> Computer
+                  <Cpu size={20} /> Computer
                 </button>
                 <button
                   onClick={() => setP2Type('human')}
-                  className={`flex-1 py-3 px-4 rounded-xl font-medium flex items-center justify-center gap-2 transition-all ${
+                  className={`flex-1 py-4 px-4 rounded-xl font-black flex items-center justify-center gap-2 transition-all border-2 ${
                     p2Type === 'human' 
-                      ? 'bg-indigo-600 text-white shadow-md' 
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      ? 'bg-[var(--color-pure-yellow)] border-[var(--color-pure-white)] text-[var(--color-pure-black)] shadow-xl scale-105' 
+                      : 'bg-[var(--color-pure-black)]/40 border-[var(--color-pure-white)]/10 text-[var(--color-pure-white)] hover:bg-[var(--color-pure-black)]/60'
                   }`}
                 >
-                  <User size={18} /> Human
+                  <User size={20} /> Human
                 </button>
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-3">Who Starts?</label>
-              <div className="flex gap-2">
+              <label className="block text-xs font-black text-[var(--color-pure-yellow)] uppercase tracking-[0.2em] mb-4">Who Starts?</label>
+              <div className="flex gap-3">
                 <button
                   onClick={() => setStartingPlayer('player1')}
-                  className={`flex-1 py-3 px-4 rounded-xl font-medium flex items-center justify-center gap-2 transition-all ${
+                  className={`flex-1 py-4 px-4 rounded-xl font-black flex items-center justify-center gap-2 transition-all border-2 ${
                     startingPlayer === 'player1' 
-                      ? 'bg-indigo-600 text-white shadow-md' 
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      ? 'bg-[var(--color-pure-yellow)] border-[var(--color-pure-white)] text-[var(--color-pure-black)] shadow-xl scale-105' 
+                      : 'bg-[var(--color-pure-black)]/40 border-[var(--color-pure-white)]/10 text-[var(--color-pure-white)] hover:bg-[var(--color-pure-black)]/60'
                   }`}
                 >
-                  <User size={18} /> Me
+                  <User size={20} /> Me
                 </button>
                 <button
                   onClick={() => setStartingPlayer('player2')}
-                  className={`flex-1 py-3 px-4 rounded-xl font-medium flex items-center justify-center gap-2 transition-all ${
+                  className={`flex-1 py-4 px-4 rounded-xl font-black flex items-center justify-center gap-2 transition-all border-2 ${
                     startingPlayer === 'player2' 
-                      ? 'bg-indigo-600 text-white shadow-md' 
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      ? 'bg-[var(--color-pure-yellow)] border-[var(--color-pure-white)] text-[var(--color-pure-black)] shadow-xl scale-105' 
+                      : 'bg-[var(--color-pure-black)]/40 border-[var(--color-pure-white)]/10 text-[var(--color-pure-white)] hover:bg-[var(--color-pure-black)]/60'
                   }`}
                 >
-                  {p2Type === 'ai' ? <Cpu size={18} /> : <User size={18} />} Opponent
+                  {p2Type === 'ai' ? <Cpu size={20} /> : <User size={20} />} Opponent
                 </button>
               </div>
             </div>
 
             <button
               onClick={initGame}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-bold text-lg shadow-lg shadow-indigo-200 transition-all flex items-center justify-center gap-2 mt-4"
+              className="w-full bg-[var(--color-pure-magenta)] hover:bg-[var(--color-pure-red)] text-[var(--color-pure-white)] py-5 rounded-2xl font-black text-xl shadow-2xl transition-all flex items-center justify-center gap-3 mt-6 border-t-4 border-[var(--color-pure-white)]/30"
             >
-              Start Adventure <ChevronRight size={20} />
+              Start Adventure <ChevronRight size={24} />
             </button>
           </div>
         </motion.div>
@@ -348,62 +364,52 @@ export default function App() {
   const p1 = gameState.players.player1;
   const p2 = gameState.players.player2;
   const isP1Turn = gameState.currentPlayer === 'player1';
+  const selectedBlock = gameState.blocks.find(b => b.id === gameState.selectedBlockId);
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 md:p-8 font-sans text-slate-900">
+    <div className="min-h-screen p-4 md:p-8 font-sans text-[var(--color-pure-white)] selection:bg-[var(--color-pure-cyan)]/40">
       {/* Header */}
       <div className="max-w-7xl mx-auto mb-8">
         <div className="flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-4">
-            <div className="bg-indigo-600 p-2 rounded-xl">
-              <Trophy className="text-white w-6 h-6" />
+            <div className="bg-[var(--color-highlight-p1)] p-4 rounded-2xl shadow-xl border-t border-[var(--color-pure-white)]/30">
+              <Trophy className="text-[var(--color-pure-black)] w-10 h-10" />
             </div>
-            <h1 className="text-2xl font-bold tracking-tight">Multiplication Quest</h1>
-          </div>
-
-          <div className="flex items-center gap-4 bg-white p-2 rounded-2xl shadow-sm border border-slate-100">
-            <div className={`px-6 py-3 rounded-xl transition-all flex items-center gap-3 ${isP1Turn ? 'bg-indigo-50 border-2 border-indigo-200' : 'opacity-50'}`}>
-              <div className="bg-indigo-600 p-1.5 rounded-lg">
-                <User className="text-white w-4 h-4" />
-              </div>
-              <div>
-                <p className="text-xs font-bold text-indigo-600 uppercase tracking-wider">{p1.name}</p>
-                <p className="text-xl font-black">{p1.score}</p>
-              </div>
-            </div>
-            
-            <div className="text-slate-300 font-bold text-xl">VS</div>
-
-            <div className={`px-6 py-3 rounded-xl transition-all flex items-center gap-3 ${!isP1Turn ? 'bg-rose-50 border-2 border-rose-200' : 'opacity-50'}`}>
-              <div>
-                <p className="text-xs font-bold text-rose-600 text-right uppercase tracking-wider">{p2.name}</p>
-                <p className="text-xl font-black text-right">{p2.score}</p>
-              </div>
-              <div className="bg-rose-600 p-1.5 rounded-lg">
-                {p2.type === 'ai' ? <Cpu className="text-white w-4 h-4" /> : <User className="text-white w-4 h-4" />}
-              </div>
+            <div>
+              <h1 className="text-4xl font-black text-[var(--color-pure-white)] tracking-tight drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">Multiplication Quest</h1>
+              <p className="text-[var(--color-pure-yellow)] font-bold uppercase tracking-widest text-xs">Strategic Arithmetic Adventure</p>
             </div>
           </div>
 
           <div className="flex gap-2">
-            <div className="flex items-center bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <button 
+              onClick={() => setShowStrategy(!showStrategy)}
+              className={`p-3 rounded-xl border-2 transition-all shadow-lg flex items-center gap-2 ${
+                showStrategy ? 'bg-[var(--color-pure-white)] border-[var(--color-pure-white)] text-[var(--color-pure-black)]' : 'bg-[var(--color-pure-gray-dark)]/60 border-[var(--color-pure-white)]/20 text-[var(--color-pure-white)] hover:bg-[var(--color-pure-gray)]'
+              }`}
+              title="Strategy Guide"
+            >
+              <Lightbulb size={20} />
+              <span className="hidden md:inline font-bold text-sm">Strategy</span>
+            </button>
+            <div className="flex items-center bg-[var(--color-pure-gray-dark)]/60 rounded-xl border-2 border-[var(--color-pure-white)]/20 shadow-lg overflow-hidden">
               <button 
                 onClick={() => setZoom(prev => Math.max(0.5, prev - 0.1))}
-                className="p-3 hover:bg-slate-50 text-slate-600 transition-all border-r border-slate-200"
+                className="p-3 hover:bg-[var(--color-pure-gray)] text-[var(--color-pure-white)] transition-all border-r border-[var(--color-pure-white)]/20"
                 title="Zoom Out"
               >
                 <ZoomOut size={18} />
               </button>
               <button 
                 onClick={() => setZoom(1)}
-                className="p-3 hover:bg-slate-50 text-slate-600 transition-all border-r border-slate-200"
+                className="p-3 hover:bg-[var(--color-pure-gray)] text-[var(--color-pure-white)] transition-all border-r border-[var(--color-pure-white)]/20"
                 title="Reset Zoom"
               >
                 <Maximize size={18} />
               </button>
               <button 
                 onClick={() => setZoom(prev => Math.min(2, prev + 0.1))}
-                className="p-3 hover:bg-slate-50 text-slate-600 transition-all"
+                className="p-3 hover:bg-[var(--color-pure-gray)] text-[var(--color-pure-white)] transition-all"
                 title="Zoom In"
               >
                 <ZoomIn size={18} />
@@ -411,14 +417,14 @@ export default function App() {
             </div>
             <button 
               onClick={() => setShowSettings(true)}
-              className="p-3 bg-white hover:bg-slate-50 rounded-xl border border-slate-200 text-slate-600 transition-all shadow-sm"
+              className="p-3 bg-[var(--color-pure-gray-dark)]/60 hover:bg-[var(--color-pure-gray)] rounded-xl border-2 border-[var(--color-pure-white)]/20 text-[var(--color-pure-white)] transition-all shadow-lg"
               title="Settings"
             >
               <Settings size={20} />
             </button>
             <button 
               onClick={initGame}
-              className="p-3 bg-white hover:bg-slate-50 rounded-xl border border-slate-200 text-slate-600 transition-all shadow-sm"
+              className="p-3 bg-[var(--color-pure-gray-dark)]/60 hover:bg-[var(--color-pure-gray)] rounded-xl border-2 border-[var(--color-pure-white)]/20 text-[var(--color-pure-white)] transition-all shadow-lg"
               title="Restart"
             >
               <RotateCcw size={20} />
@@ -427,126 +433,242 @@ export default function App() {
         </div>
       </div>
 
-      {/* Main Game Area */}
-      <div className="max-w-7xl mx-auto overflow-auto custom-scrollbar">
-        <div 
-          className="grid grid-cols-1 lg:grid-cols-12 gap-8 transition-transform duration-200 ease-out"
-          style={{ 
-            transform: `scale(${zoom})`, 
-            transformOrigin: 'top center',
-            marginBottom: `${(zoom - 1) * 100}%` // Adjust margin to prevent overlap when zoomed
-          }}
-        >
-        
-        {/* Left: Box Board */}
-        <div className="lg:col-span-5 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold flex items-center gap-2">
-              <HelpCircle className="text-indigo-600" size={20} />
-              The Box <span className="text-slate-400 font-medium text-sm">Pick a block</span>
-            </h2>
-            <div className="bg-slate-200 px-3 py-1 rounded-full text-xs font-bold text-slate-600">
-              {gameState.blocks.filter(b => !b.placed).length} blocks left
+      {/* Scoreboard */}
+      <div className="max-w-7xl mx-auto grid grid-cols-2 gap-4 mb-8">
+        <div className={`p-6 rounded-3xl transition-all border-4 ${isP1Turn ? 'bg-[var(--color-highlight-p1)] border-[var(--color-pure-white)] shadow-2xl scale-105' : 'bg-[var(--color-pure-black)]/40 border-transparent opacity-50'}`}>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-3">
+              <div className={`p-2 rounded-xl ${isP1Turn ? 'bg-[var(--color-pure-white)] text-[var(--color-pure-black)]' : 'bg-[var(--color-pure-gray-dark)] text-[var(--color-pure-yellow)]'}`}>
+                <User size={20} />
+              </div>
+              <span className={`font-black text-lg uppercase tracking-tight ${isP1Turn ? 'text-[var(--color-pure-black)]' : 'text-[var(--color-pure-white)]'}`}>{p1.name}</span>
             </div>
+            <span className={`text-4xl font-black tabular-nums ${isP1Turn ? 'text-[var(--color-pure-black)]' : 'text-[var(--color-pure-white)]'}`}>{p1.score}</span>
           </div>
-          
-          <div 
-            className="grid gap-2 bg-white p-4 rounded-3xl shadow-sm border border-slate-100"
-            style={{ gridTemplateColumns: `repeat(${gameState.n}, minmax(0, 1fr))` }}
-          >
-            {gameState.blocks.map(block => (
-              <button
-                key={block.id}
-                disabled={block.placed || (gameState.players[gameState.currentPlayer].type === 'ai')}
-                onClick={() => selectBlock(block.id)}
-                className={`
-                  aspect-square flex items-center justify-center text-[10px] md:text-xs font-bold rounded-lg transition-all
-                  ${block.placed ? 
-                    (gameState.lastMove?.blockId === block.id ? 'bg-rose-600 text-rose-100 shadow-lg ring-2 ring-rose-400 z-10' : 'bg-slate-800 text-slate-600 shadow-inner opacity-40') 
-                    : 
-                    gameState.selectedBlockId === block.id ? 'bg-indigo-600 text-white shadow-lg scale-110 z-10' : 
-                    'bg-indigo-50 text-indigo-700 hover:bg-indigo-100 hover:scale-105 active:scale-95'}
-                `}
-              >
-                {block.id}
-              </button>
-            ))}
+          <div className="h-2 bg-[var(--color-pure-black)]/20 rounded-full overflow-hidden">
+            <motion.div 
+              className="h-full bg-[var(--color-pure-white)]"
+              animate={{ width: isP1Turn ? '100%' : '0%' }}
+            />
           </div>
         </div>
 
-        {/* Right: Field Board */}
-        <div className="lg:col-span-7 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold flex items-center gap-2">
-              <CheckCircle2 className="text-emerald-600" size={20} />
-              The Field <span className="text-slate-400 font-medium text-sm">Place on product</span>
-            </h2>
-            <div className="flex gap-2">
-               <div className="flex items-center gap-1.5 text-xs font-medium text-slate-500">
-                 <div className="w-3 h-3 bg-emerald-500 rounded-sm"></div> Highlighted
-               </div>
+        <div className={`p-6 rounded-3xl transition-all border-4 ${!isP1Turn ? 'bg-[var(--color-highlight-p2)] border-[var(--color-pure-white)] shadow-2xl scale-105' : 'bg-[var(--color-pure-black)]/40 border-transparent opacity-50'}`}>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-3">
+              <div className={`p-2 rounded-xl ${!isP1Turn ? 'bg-[var(--color-pure-white)] text-[var(--color-pure-black)]' : 'bg-[var(--color-pure-gray-dark)] text-[var(--color-pure-magenta)]'}`}>
+                {p2.type === 'ai' ? <Cpu size={20} /> : <User size={20} />}
+              </div>
+              <span className={`font-black text-lg uppercase tracking-tight ${!isP1Turn ? 'text-[var(--color-pure-black)]' : 'text-[var(--color-pure-white)]'}`}>{p2.name}</span>
             </div>
+            <span className={`text-4xl font-black tabular-nums ${!isP1Turn ? 'text-[var(--color-pure-black)]' : 'text-[var(--color-pure-white)]'}`}>{p2.score}</span>
           </div>
-
-          <div 
-            className="grid gap-2 bg-white p-4 rounded-3xl shadow-sm border border-slate-100 relative"
-            style={{ gridTemplateColumns: `repeat(${gameState.n}, minmax(0, 1fr))` }}
-          >
-            {gameState.squares.map(square => (
-              <button
-                key={square.id}
-                disabled={!gameState.selectedBlockId || (gameState.players[gameState.currentPlayer].type === 'ai')}
-                onClick={() => selectSquare(square.id)}
-                className={`
-                  aspect-square flex items-center justify-center text-xs md:text-sm font-bold rounded-lg transition-all relative
-                  ${square.highlighted ? 'bg-emerald-500 text-white shadow-inner' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}
-                  ${gameState.selectedBlockId ? 'cursor-pointer hover:ring-2 hover:ring-indigo-400' : 'cursor-default'}
-                `}
-              >
-                {square.value}
-                {square.blockCount > 1 && (
-                  <span className="absolute -top-1 -right-1 bg-amber-400 text-amber-900 text-[8px] px-1 rounded-full border border-white">
-                    {square.blockCount}
-                  </span>
-                )}
-              </button>
-            ))}
+          <div className="h-2 bg-[var(--color-pure-black)]/20 rounded-full overflow-hidden">
+            <motion.div 
+              className="h-full bg-[var(--color-pure-white)]"
+              animate={{ width: !isP1Turn ? '100%' : '0%' }}
+            />
           </div>
         </div>
       </div>
-    </div>
 
-      {/* Footer / History */}
+      {/* Strategy Guide */}
+      <AnimatePresence>
+        {showStrategy && (
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="max-w-7xl mx-auto mb-8 overflow-hidden"
+          >
+            <div className="bg-[var(--color-pure-yellow)]/10 border border-[var(--color-pure-yellow)]/20 rounded-3xl p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h3 className="text-[var(--color-pure-yellow)] font-bold flex items-center gap-2 mb-2">
+                  <Sparkles size={18} /> The Mirror Strategy
+                </h3>
+                <p className="text-[var(--color-pure-white)]/80 text-sm leading-relaxed">
+                  If your opponent places a block like <span className="font-bold">2x6</span>, try to find the mirror block <span className="font-bold">6x2</span>. 
+                  This helps you control the squares and sets you up for bonus points!
+                </p>
+              </div>
+              <div>
+                <h3 className="text-[var(--color-pure-yellow)] font-bold flex items-center gap-2 mb-2">
+                  <Trophy size={18} /> The Diagonal Secret
+                </h3>
+                <p className="text-[var(--color-pure-white)]/80 text-sm leading-relaxed">
+                  Diagonal blocks (like <span className="font-bold">4x4</span> or <span className="font-bold">9x9</span>) are special. 
+                  They are the only ones that land on squares with an odd number of possible combinations. 
+                  Placing these early can be the key to winning!
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Main Game Area */}
+      <div className="max-w-7xl mx-auto overflow-auto custom-scrollbar">
+        <div 
+          className="grid grid-cols-1 lg:grid-cols-[1fr_1.5fr] gap-12 p-8 wood-panel rounded-[3rem]"
+          style={{ 
+            transform: `scale(${zoom})`, 
+            transformOrigin: 'top center',
+            width: zoom > 1 ? `${zoom * 100}%` : '100%'
+          }}
+        >
+          {/* Left: The Box */}
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-black text-[var(--color-pure-yellow)] uppercase tracking-tighter flex items-center gap-3">
+                <div className="w-8 h-8 bg-[var(--color-pure-yellow)] rounded-lg flex items-center justify-center text-[var(--color-pure-black)]">
+                  <RotateCcw size={18} />
+                </div>
+                The Box
+              </h2>
+              <span className="bg-[var(--color-pure-black)]/40 px-4 py-1.5 rounded-full text-xs font-bold text-[var(--color-pure-yellow)] uppercase tracking-widest border border-[var(--color-pure-white)]/5">
+                {gameState.blocks.filter(b => !b.placed).length} Blocks Left
+              </span>
+            </div>
+            
+            <div 
+              className="grid gap-3 bg-black/30 p-4 rounded-3xl border border-white/5 shadow-inner"
+              style={{ gridTemplateColumns: `repeat(${gameState.n}, minmax(0, 1fr))` }}
+            >
+              {gameState.blocks.map(block => (
+                <button
+                  key={block.id}
+                  disabled={block.placed || (gameState.players[gameState.currentPlayer].type === 'ai')}
+                  onClick={() => selectBlock(block.id)}
+                  className={`
+                    aspect-square flex items-center justify-center text-[10px] md:text-xs font-black rounded-lg transition-all relative
+                    ${block.placed ? 
+                      (gameState.lastMove?.blockId === block.id ? 'bg-[var(--color-pure-red)] text-[var(--color-pure-white)] shadow-2xl ring-4 ring-[var(--color-pure-white)] z-10 animate-pulse' : 'wood-slot text-transparent') 
+                      : 
+                      gameState.selectedBlockId === block.id ? 'bg-[var(--color-highlight-select)] text-[var(--color-pure-black)] shadow-2xl scale-110 z-10 ring-4 ring-[var(--color-pure-white)]' : 
+                      'wood-tile-black text-[var(--color-pure-yellow)] ring-1 ring-[var(--color-pure-white)]/5 drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] hover:scale-105 active:scale-95'}
+                  `}
+                >
+                  {!block.placed || gameState.lastMove?.blockId === block.id ? block.id : ''}
+                  {gameState.lastMove?.blockId === block.id && (
+                    <span className="absolute -top-2 -right-2 bg-[var(--color-pure-red)] text-[var(--color-pure-white)] text-[8px] px-1.5 py-0.5 rounded-full font-black shadow-sm z-20">
+                      LAST
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {/* Active Block Indicator */}
+            <AnimatePresence>
+              {selectedBlock && (
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  className="bg-[var(--color-highlight-select)] text-[var(--color-pure-black)] p-6 rounded-3xl shadow-2xl flex items-center justify-between border-t-4 border-[var(--color-pure-white)]/50"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="bg-[var(--color-pure-black)]/20 p-3 rounded-2xl">
+                      <HelpCircle size={24} />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black text-[var(--color-pure-black)]/60 uppercase tracking-widest">Active Block</p>
+                      <p className="text-3xl font-black">{selectedBlock.id}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[10px] font-black text-[var(--color-pure-black)]/60 uppercase tracking-widest">Target Product</p>
+                    <p className="text-3xl font-black">{selectedBlock.product}</p>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Right: Field Board */}
+          <div className="space-y-6">
+            <h2 className="text-2xl font-black text-[var(--color-pure-yellow)] uppercase tracking-tighter flex items-center gap-3">
+              <div className="w-8 h-8 bg-[var(--color-pure-red)] rounded-lg flex items-center justify-center text-[var(--color-pure-white)]">
+                <Trophy size={18} />
+              </div>
+              The Field
+            </h2>
+            
+            <div 
+              className="grid gap-2 bg-[var(--color-pure-black)]/40 p-4 rounded-3xl border-2 border-[var(--color-pure-white)]/10"
+              style={{ 
+                gridTemplateColumns: `repeat(${gameState.n}, minmax(0, 1fr))` 
+              }}
+            >
+              {gameState.squares.map(square => (
+                <button
+                  key={square.id}
+                  disabled={gameState.players[gameState.currentPlayer].type === 'ai'}
+                  onClick={() => selectSquare(square.id)}
+                  className={`
+                    aspect-square flex items-center justify-center text-[10px] md:text-sm font-black rounded-lg transition-all
+                    ${square.highlighted ? 
+                      'bg-[var(--color-highlight-success)] text-[var(--color-pure-black)] shadow-2xl scale-105 border-t-2 border-[var(--color-pure-white)]/40' : 
+                      'wood-slot text-[var(--color-pure-white)] font-bold hover:text-[var(--color-pure-cyan)] hover:bg-[var(--color-pure-black)]/60'}
+                  `}
+                >
+                  {square.value}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer Info */}
       <div className="max-w-7xl mx-auto mt-8 grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 md:col-span-2">
-          <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-            <Info size={16} /> Game Log
+        <div className="bg-[var(--color-pure-black)]/40 p-8 rounded-[2.5rem] shadow-2xl border-2 border-[var(--color-pure-white)]/10 md:col-span-2">
+          <h3 className="text-sm font-black text-[var(--color-pure-yellow)] uppercase tracking-widest mb-6 flex items-center gap-2">
+            <History size={16} /> Game Log
           </h3>
-          <div className="h-32 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
+          <div className="h-40 overflow-y-auto space-y-3 pr-4 custom-scrollbar">
             {gameState.history.length === 0 ? (
-              <p className="text-slate-300 italic text-sm">No moves yet...</p>
+              <div className="flex flex-col items-center justify-center h-full text-[var(--color-pure-white)]/20">
+                <Info size={32} className="mb-2 opacity-20" />
+                <p className="italic text-sm">Waiting for the first move...</p>
+              </div>
             ) : (
               gameState.history.slice().reverse().map((log, i) => (
-                <div key={i} className="flex items-center gap-2 text-sm text-slate-600 border-b border-slate-50 pb-2">
-                  <div className={`w-1.5 h-1.5 rounded-full ${log.includes('player1') ? 'bg-indigo-400' : 'bg-rose-400'}`}></div>
-                  {log}
-                </div>
+                <motion.div 
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  key={i} 
+                  className="flex items-center gap-4 text-sm text-[var(--color-pure-white)] border-b border-[var(--color-pure-white)]/10 pb-3"
+                >
+                  <div className={`w-3 h-3 rounded-full shrink-0 ${log.includes('player1') ? 'bg-[var(--color-pure-yellow)] shadow-[0_0_12px_rgba(255,255,0,0.8)]' : 'bg-[var(--color-pure-magenta)] shadow-[0_0_12px_rgba(255,0,255,0.8)]'}`}></div>
+                  <span className="font-mono text-[10px] text-[var(--color-pure-white)]/40">#{gameState.history.length - i}</span>
+                  <span className="flex-1 font-bold">{log}</span>
+                </motion.div>
               ))
             )}
           </div>
         </div>
 
-        <div className="bg-indigo-900 text-white p-6 rounded-3xl shadow-xl shadow-indigo-100 flex flex-col justify-center">
-          <h3 className="text-indigo-300 text-xs font-bold uppercase tracking-widest mb-2">Current Turn</h3>
-          <div className="flex items-center gap-4">
-            <div className={`p-3 rounded-2xl ${isP1Turn ? 'bg-indigo-600' : 'bg-rose-600'}`}>
-              {isP1Turn ? <User size={24} /> : (p2.type === 'ai' ? <Cpu size={24} /> : <User size={24} />)}
+        <div className="bg-[var(--color-pure-black)]/40 p-8 rounded-[2.5rem] shadow-2xl border-2 border-[var(--color-pure-white)]/10">
+          <h3 className="text-sm font-black text-[var(--color-pure-yellow)] uppercase tracking-widest mb-4 flex items-center gap-2">
+            <Settings size={16} /> Game Info
+          </h3>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-[var(--color-pure-white)]/60 font-bold">Board Size</span>
+              <span className="font-black text-[var(--color-pure-white)]">{gameState.n}x{gameState.n}</span>
             </div>
-            <div>
-              <p className="text-xl font-bold">{gameState.currentPlayer === 'player1' ? p1.name : p2.name}</p>
-              <p className="text-indigo-300 text-sm">
-                {gameState.selectedBlockId ? 'Place the block!' : 'Select a block from the box'}
-              </p>
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-[var(--color-pure-white)]/60 font-bold">Opponent</span>
+              <span className="font-black text-[var(--color-pure-white)]">{gameState.players.player2.type === 'ai' ? 'Computer' : 'Human'}</span>
+            </div>
+            <div className="pt-4 border-t border-[var(--color-pure-white)]/10">
+              <button 
+                onClick={() => setShowSettings(true)}
+                className="w-full py-3 bg-[var(--color-pure-gray)] hover:bg-[var(--color-pure-gray-light)] text-[var(--color-pure-white)] rounded-xl font-black transition-all shadow-xl flex items-center justify-center gap-2 border-t border-[var(--color-pure-white)]/20"
+              >
+                <Settings size={18} /> New Game
+              </button>
             </div>
           </div>
         </div>
@@ -558,35 +680,36 @@ export default function App() {
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-[var(--color-pure-black)]/80 backdrop-blur-md z-50 flex items-center justify-center p-4"
           >
             <motion.div 
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
-              className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl"
+              className="bg-[var(--color-wood-modal)] rounded-[3rem] p-10 max-w-sm w-full text-center shadow-2xl border-4 border-[var(--color-pure-white)]/20"
+              style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/wood-pattern.png")' }}
             >
-              <div className="w-20 h-20 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Trophy size={40} />
+              <div className="w-24 h-24 bg-[var(--color-pure-yellow)] text-[var(--color-pure-black)] rounded-full flex items-center justify-center mx-auto mb-8 shadow-2xl ring-4 ring-[var(--color-pure-white)]/20">
+                <Trophy size={48} />
               </div>
-              <h2 className="text-3xl font-black text-slate-900 mb-2">Game Over!</h2>
-              <p className="text-slate-500 mb-8">
+              <h2 className="text-4xl font-black text-[var(--color-pure-white)] mb-2 drop-shadow-lg">Game Over!</h2>
+              <p className="text-[var(--color-pure-yellow)] mb-10 font-black uppercase tracking-widest text-sm">
                 {p1.score > p2.score ? `${p1.name} wins!` : p2.score > p1.score ? `${p2.name} wins!` : "It's a draw!"}
               </p>
               
-              <div className="grid grid-cols-2 gap-4 mb-8">
-                <div className="bg-indigo-50 p-4 rounded-2xl">
-                  <p className="text-xs font-bold text-indigo-600 uppercase">{p1.name}</p>
-                  <p className="text-2xl font-black">{p1.score}</p>
+              <div className="grid grid-cols-2 gap-4 mb-10">
+                <div className="bg-[var(--color-pure-black)]/40 p-6 rounded-3xl border-2 border-[var(--color-pure-white)]/10">
+                  <p className="text-[10px] font-black text-[var(--color-pure-white)]/60 uppercase tracking-[0.2em] mb-1">{p1.name}</p>
+                  <p className="text-3xl font-black text-[var(--color-pure-yellow)]">{p1.score}</p>
                 </div>
-                <div className="bg-rose-50 p-4 rounded-2xl">
-                  <p className="text-xs font-bold text-rose-600 uppercase">{p2.name}</p>
-                  <p className="text-2xl font-black">{p2.score}</p>
+                <div className="bg-[var(--color-pure-black)]/40 p-6 rounded-3xl border-2 border-[var(--color-pure-white)]/10">
+                  <p className="text-[10px] font-black text-[var(--color-pure-white)]/60 uppercase tracking-[0.2em] mb-1">{p2.name}</p>
+                  <p className="text-3xl font-black text-[var(--color-pure-magenta)]">{p2.score}</p>
                 </div>
               </div>
 
               <button
                 onClick={() => setShowSettings(true)}
-                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-bold text-lg shadow-lg shadow-indigo-200 transition-all"
+                className="w-full bg-[var(--color-pure-yellow)] hover:bg-[var(--color-pure-white)] text-[var(--color-pure-black)] py-5 rounded-2xl font-black text-xl shadow-2xl transition-all border-t-4 border-[var(--color-pure-white)]/40"
               >
                 Play Again
               </button>
@@ -594,23 +717,6 @@ export default function App() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      <style>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: #f1f5f9;
-          border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #cbd5e1;
-          border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #94a3b8;
-        }
-      `}</style>
     </div>
   );
 }
