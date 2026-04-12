@@ -355,6 +355,29 @@ export default function App() {
               Start Game <ChevronRight size={20} />
             </button>
           </div>
+          {/* Version Info */}
+          <div className="mt-8 pt-4 border-t border-[var(--color-gray-700)] text-center space-y-2">
+            <button 
+              onClick={() => {
+                if ('serviceWorker' in navigator) {
+                  navigator.serviceWorker.getRegistrations().then(registrations => {
+                    for (let registration of registrations) {
+                      registration.unregister();
+                    }
+                    window.location.reload();
+                  });
+                } else {
+                  window.location.reload();
+                }
+              }}
+              className="text-[10px] font-mono text-[var(--color-gray-500)] hover:text-[var(--color-pure-white)] transition-colors uppercase tracking-widest flex items-center justify-center gap-1 mx-auto"
+            >
+              <RotateCcw size={10} /> Force Update
+            </button>
+            <p className="text-[10px] font-mono text-[var(--color-gray-500)] uppercase tracking-widest">
+              v2.0.4 • Strategy Optimized
+            </p>
+          </div>
         </motion.div>
       </div>
     );
@@ -583,6 +606,30 @@ export default function App() {
           </motion.div>
         )}
       </AnimatePresence>
+      {/* Footer */}
+      <div className="max-w-7xl mx-auto mt-8 pb-8 flex justify-between items-center text-[10px] font-mono text-[var(--color-gray-500)] uppercase tracking-widest">
+        <p>© 2026 Multiplication Quest</p>
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => {
+              if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(registrations => {
+                  for (let registration of registrations) {
+                    registration.unregister();
+                  }
+                  window.location.reload();
+                });
+              } else {
+                window.location.reload();
+              }
+            }}
+            className="hover:text-[var(--color-pure-white)] transition-colors flex items-center gap-1"
+          >
+            <RotateCcw size={10} /> Force Update
+          </button>
+          <p>v2.0.4 • Strategy Optimized</p>
+        </div>
+      </div>
     </div>
   );
 }
