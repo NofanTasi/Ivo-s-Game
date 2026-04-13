@@ -418,7 +418,7 @@ export default function App() {
               <RotateCcw size={10} /> {t.forceUpdate}
             </button>
             <p className="text-[10px] font-mono text-[var(--color-gray-500)] uppercase tracking-widest">
-              v2.1.2
+              v2.1.4
             </p>
           </div>
         </motion.div>
@@ -680,7 +680,7 @@ export default function App() {
       </AnimatePresence>
       {/* Footer */}
       <div className="max-w-7xl mx-auto mt-8 pb-8 flex justify-between items-center text-[10px] font-mono text-[var(--color-gray-500)] uppercase tracking-widest">
-        <p>© 2026 Multiplication Quest</p>
+        <p>© 2026 multiply</p>
         <div className="flex items-center gap-4">
           <button 
             onClick={() => {
@@ -700,7 +700,7 @@ export default function App() {
           >
             <RotateCcw size={10} /> {t.forceUpdate}
           </button>
-          <p>v2.1.2</p>
+          <p>v2.1.4</p>
         </div>
       </div>
     </div>
