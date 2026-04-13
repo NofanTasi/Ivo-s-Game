@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, useAnimation } from 'motion/react';
 import { 
   Trophy, 
   RotateCcw, 
@@ -100,6 +100,45 @@ const generateSquares = (n: number): SquareData[] => {
     });
   }
   return squares;
+};
+
+// --- Components ---
+
+const Logo = ({ className = "" }: { className?: string }) => {
+  const controls = useAnimation();
+  const [isFlashing, setIsFlashing] = useState(false);
+
+  const handleClick = async () => {
+    if (isFlashing) return;
+    setIsFlashing(true);
+    await controls.start({
+      filter: ["invert(0)", "invert(1)", "invert(0)", "invert(1)", "invert(0)"],
+      transition: { duration: 1.2, times: [0, 0.25, 0.5, 0.75, 1], ease: "easeInOut" }
+    });
+    setIsFlashing(false);
+  };
+
+  return (
+    <motion.div 
+      animate={controls}
+      onClick={handleClick}
+      className={`font-mono leading-none select-none bg-black border border-white p-2 rounded cursor-pointer ${className}`}
+    >
+      <div className="flex gap-2 mb-1">
+        <span className="text-[var(--color-vivid-red)] font-black">I</span>
+        <span className="text-[var(--color-vivid-green)] font-black">V</span>
+        <span className="text-[var(--color-vivid-blue)] font-black">O</span>
+      </div>
+      <div className="flex justify-center mb-1">
+        <span className="text-white font-black">x</span>
+      </div>
+      <div className="flex gap-2">
+        <span className="text-[var(--color-vivid-cyan)] font-black">O</span>
+        <span className="text-[var(--color-vivid-magenta)] font-black">^</span>
+        <span className="text-[var(--color-vivid-yellow)] font-black">I</span>
+      </div>
+    </motion.div>
+  );
 };
 
 // --- Main Component ---
@@ -339,22 +378,7 @@ export default function App() {
           className="bg-[var(--color-bg-secondary)] rounded-2xl shadow-2xl p-8 max-w-md w-full border border-[var(--color-gray-700)]"
         >
           <div className="flex items-center gap-4 mb-8">
-            {/* Custom IVO Logo */}
-            <div className="font-mono leading-none select-none text-xl bg-black border border-white p-2 rounded">
-              <div className="flex gap-2 mb-1">
-                <span className="text-[var(--color-vivid-red)] font-black">I</span>
-                <span className="text-[var(--color-vivid-green)] font-black">V</span>
-                <span className="text-[var(--color-vivid-blue)] font-black">O</span>
-              </div>
-              <div className="flex justify-center mb-1">
-                <span className="text-white font-black">x</span>
-              </div>
-              <div className="flex gap-2">
-                <span className="text-[var(--color-vivid-cyan)] font-black">O</span>
-                <span className="text-[var(--color-vivid-magenta)] font-black">^</span>
-                <span className="text-[var(--color-vivid-yellow)] font-black">I</span>
-              </div>
-            </div>
+            <Logo className="text-xl" />
             <h1 className="text-2xl font-bold text-[var(--color-text-main)] lowercase">{t.title}</h1>
             <Miffy size={50} className="ml-2" />
           </div>
@@ -475,21 +499,7 @@ export default function App() {
       <div className="max-w-7xl mx-auto mb-8 flex justify-between items-center">
         <div className="flex items-center gap-6">
           {/* Custom IVO Logo */}
-          <div className="font-mono leading-none select-none bg-black border border-white p-2 rounded">
-            <div className="flex gap-2 mb-1">
-              <span className="text-[var(--color-vivid-red)] font-black">I</span>
-              <span className="text-[var(--color-vivid-green)] font-black">V</span>
-              <span className="text-[var(--color-vivid-blue)] font-black">O</span>
-            </div>
-            <div className="flex justify-center mb-1">
-              <span className="text-white font-black">x</span>
-            </div>
-            <div className="flex gap-2">
-              <span className="text-[var(--color-vivid-cyan)] font-black">O</span>
-              <span className="text-[var(--color-vivid-magenta)] font-black">^</span>
-              <span className="text-[var(--color-vivid-yellow)] font-black">I</span>
-            </div>
-          </div>
+          <Logo />
           <h1 className="text-xl font-bold tracking-tight lowercase">{t.title}</h1>
           <Miffy size={32} />
         </div>
@@ -674,46 +684,37 @@ export default function App() {
         </div>
       </div>
 
-      {/* Game Over Modal */}
+      {/* Game Over Modal - Minimalist */}
       <AnimatePresence>
         {gameState.gameOver && (
           <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="fixed inset-0 bg-[var(--color-pure-black)]/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4"
           >
-            <motion.div 
-              initial={{ scale: 0.95 }}
-              animate={{ scale: 1 }}
-              className="bg-[var(--color-bg-secondary)] rounded-2xl p-8 max-w-sm w-full text-center shadow-2xl border border-[var(--color-gray-700)]"
-            >
-              <div className="w-16 h-16 bg-[var(--color-soft-yellow)] text-[var(--color-pure-black)] rounded-full flex items-center justify-center mx-auto mb-6">
-                <Trophy size={32} />
+            <div className="bg-[var(--color-bg-secondary)] rounded-2xl p-6 shadow-2xl border border-[var(--color-gray-700)] flex items-center gap-6">
+              <div className="w-12 h-12 bg-[var(--color-soft-yellow)] text-[var(--color-pure-black)] rounded-full flex items-center justify-center shrink-0">
+                <Trophy size={24} />
               </div>
-              <h2 className="text-2xl font-bold text-[var(--color-text-main)] mb-2">{t.gameOver}</h2>
-              <p className="text-[var(--color-gray-300)] mb-6 font-bold">
-                {p1.score > p2.score ? `${p1.name} ${t.wins}` : p2.score > p1.score ? `${p2.name} ${t.wins}` : t.draw}
-              </p>
-              
-              <div className="grid grid-cols-2 gap-4 mb-8">
-                <div className="bg-[var(--color-bg-main)] p-4 rounded-lg border border-[var(--color-gray-700)]">
-                  <p className="text-[10px] font-bold text-[var(--color-gray-500)] uppercase mb-1">{p1.name}</p>
-                  <p className="text-xl font-bold">{p1.score}</p>
-                </div>
-                <div className="bg-[var(--color-bg-main)] p-4 rounded-lg border border-[var(--color-gray-700)]">
-                  <p className="text-[10px] font-bold text-[var(--color-gray-500)] uppercase mb-1">{p2.name}</p>
-                  <p className="text-xl font-bold">{p2.score}</p>
+              <div className="flex-1 text-left">
+                <h2 className="text-lg font-bold text-[var(--color-text-main)]">{t.gameOver}</h2>
+                <p className="text-xs text-[var(--color-gray-300)] font-bold">
+                  {p1.score > p2.score ? `${p1.name} ${t.wins}` : p2.score > p1.score ? `${p2.name} ${t.wins}` : t.draw}
+                </p>
+                <div className="flex gap-4 mt-1">
+                  <span className="text-[10px] text-[var(--color-gray-500)] uppercase font-bold">{p1.name}: {p1.score}</span>
+                  <span className="text-[10px] text-[var(--color-gray-500)] uppercase font-bold">{p2.name}: {p2.score}</span>
                 </div>
               </div>
-
               <button
                 onClick={() => setShowSettings(true)}
                 title={t.ttPlayAgain}
-                className="w-full bg-[var(--color-soft-blue)] text-[var(--color-pure-black)] py-3 rounded-lg font-bold transition-all"
+                className="bg-[var(--color-soft-blue)] text-[var(--color-pure-black)] px-4 py-2 rounded-lg font-bold text-xs transition-all hover:scale-105"
               >
                 {t.playAgain}
               </button>
-            </motion.div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
