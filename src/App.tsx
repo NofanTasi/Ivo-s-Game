@@ -311,6 +311,7 @@ export default function App() {
       };
 
       const currentCounts = getProductCounts(gameState.blocks);
+      const squareMap = new Map<number, SquareData>(gameState.squares.map(s => [s.value, s]));
       
       // Identify moves that maintain the invariant (even number of odd sets)
       const winningMoves = availableBlocks.filter(move => {
@@ -326,7 +327,28 @@ export default function App() {
 
       // --- Obfuscation Ranking ---
       const rankedCandidates = candidates.sort((a, b) => {
-        // 1. Maximize number of odd sets
+        const sqA = squareMap.get(a.product);
+        const sqB = squareMap.get(b.product);
+
+        // 1. Immediate Point Gain (Efficiency)
+        // A point is gained if the square is already highlighted (at least one block placed there)
+        const gainA = sqA?.highlighted ? 1 : 0;
+        const gainB = sqB?.highlighted ? 1 : 0;
+        if (gainA !== gainB) return gainB - gainA;
+
+        // 2. Safe Play: Finish a set of size 1
+        // Playing the last block of a product gains no point but doesn't leave one for the opponent.
+        const isSizeOneA = currentCounts[a.product] === 1 ? 1 : 0;
+        const isSizeOneB = currentCounts[b.product] === 1 ? 1 : 0;
+        if (isSizeOneA !== isSizeOneB) return isSizeOneB - isSizeOneA;
+
+        // 3. Strategic: Avoid giving away points (prefer odd sets over even sets)
+        // Prefer playing from an already odd set (parity-reducing) over starting an even set (parity-increasing)
+        const isOddA = currentCounts[a.product] % 2 !== 0 ? 1 : 0;
+        const isOddB = currentCounts[b.product] % 2 !== 0 ? 1 : 0;
+        if (isOddA !== isOddB) return isOddB - isOddA;
+
+        // 4. Obfuscation: Maximize resulting odd sets (Complexity)
         const getOddCount = (move: BlockData) => {
           const nextCounts = { ...currentCounts };
           nextCounts[move.product]--;
@@ -336,7 +358,7 @@ export default function App() {
         const oddB = getOddCount(b);
         if (oddA !== oddB) return oddB - oddA;
 
-        // 2. Prefer larger remaining sets Sp
+        // 4. Prefer larger remaining sets Sp
         const countA = currentCounts[a.product];
         const countB = currentCounts[b.product];
         if (countA !== countB) return countB - countA;
@@ -357,8 +379,8 @@ export default function App() {
       });
 
       // Pick the best candidate (top of sorted list)
-      // Small randomness to avoid being 100% predictable
-      const chosenBlock = Math.random() > 0.1 ? rankedCandidates[0] : rankedCandidates[Math.floor(Math.random() * rankedCandidates.length)];
+      // Very small randomness to avoid being 100% predictable, but "try hard"
+      const chosenBlock = Math.random() > 0.02 ? rankedCandidates[0] : rankedCandidates[Math.floor(Math.random() * rankedCandidates.length)];
 
       // Execute AI Turn
       selectBlock(chosenBlock.id);
