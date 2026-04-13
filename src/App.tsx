@@ -250,41 +250,53 @@ export default function App() {
       const availableBlocks = gameState.blocks.filter(b => !b.placed);
       if (availableBlocks.length === 0) return;
 
+      const lastMove = gameState.lastMove;
       let chosenBlock: BlockData;
 
-      // Strategy Implementation
-      const lastMove = gameState.lastMove;
-      const candidates: BlockData[] = [];
-      
-      if (lastMove) {
-        // (1) If opponent played a square (d,d), react with another square (e,e) if possible
-        if (lastMove.i === lastMove.j) {
-          const availableSquares = availableBlocks.filter(b => b.i === b.j);
-          if (availableSquares.length > 0) {
-            candidates.push(...availableSquares);
-          }
-        }
+      // 1. Identify blocks that score points (product already highlighted)
+      const scoringBlocks = availableBlocks.filter(b => {
+        const square = gameState.squares.find(s => s.value === b.product);
+        return square && square.highlighted;
+      });
 
-        // (2) React to (i,j) with another (k,l) such that k*l = i*j
-        const sameProductBlocks = availableBlocks.filter(b => b.product === lastMove.product);
-        if (sameProductBlocks.length > 0) {
-          // Add all same-product blocks. Picking randomly from these is "less transparent" than always mirroring.
-          candidates.push(...sameProductBlocks);
+      // 2. Identify blocks that respond to the last move (same product)
+      const responseBlocks = lastMove 
+        ? availableBlocks.filter(b => b.product === lastMove.product)
+        : [];
+
+      let candidates: BlockData[] = [];
+
+      if (responseBlocks.length > 0) {
+        // --- "Less Straightforward" Logic for Response ---
+        if (lastMove!.i !== lastMove!.j) {
+          // If human played (i,j), avoid (j,i) if other (k,l) with same product exist
+          const others = responseBlocks.filter(b => !(b.i === lastMove!.j && b.j === lastMove!.i));
+          candidates = others.length > 0 ? others : responseBlocks;
+        } else {
+          // If human played (d,d), avoid another square (e,e) if other (k,l) exist
+          const others = responseBlocks.filter(b => b.i !== b.j);
+          candidates = others.length > 0 ? others : responseBlocks;
+        }
+      } else if (scoringBlocks.length > 0) {
+        // If we can score elsewhere, take it
+        candidates = scoringBlocks;
+      } else {
+        // --- Strategic "Opening" Moves ---
+        // Prefer perfect squares (i=j) to control parity in the early/mid game
+        const perfectSquares = availableBlocks.filter(b => b.i === b.j);
+        if (perfectSquares.length > 0) {
+          candidates = perfectSquares;
+        } else {
+          // Otherwise, pick a random block but try to mask the strategy
+          candidates = availableBlocks;
         }
       }
 
-      // To be less transparent, we pick from strategic candidates 85% of the time.
-      // 15% of the time we pick a random block to mask the strategy.
-      if (candidates.length > 0 && Math.random() > 0.15) {
+      // Pick from candidates, with a small chance of a purely random move to remain unpredictable
+      if (Math.random() > 0.1 && candidates.length > 0) {
         chosenBlock = candidates[Math.floor(Math.random() * candidates.length)];
       } else {
-        // Default: pick a square if available (to get rid of odd sets), else random
-        const availableSquares = availableBlocks.filter(b => b.i === b.j);
-        if (availableSquares.length > 0 && Math.random() > 0.2) {
-          chosenBlock = availableSquares[Math.floor(Math.random() * availableSquares.length)];
-        } else {
-          chosenBlock = availableBlocks[Math.floor(Math.random() * availableBlocks.length)];
-        }
+        chosenBlock = availableBlocks[Math.floor(Math.random() * availableBlocks.length)];
       }
 
       // Execute AI Turn
