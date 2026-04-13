@@ -478,7 +478,7 @@ export default function App() {
               <RotateCcw size={10} /> {t.forceUpdate}
             </button>
             <p className="text-[10px] font-mono text-[var(--color-gray-500)] uppercase tracking-widest">
-              v2.1.4
+              v2.1.5
             </p>
           </div>
         </motion.div>
@@ -740,7 +740,7 @@ export default function App() {
           >
             <RotateCcw size={10} /> {t.forceUpdate}
           </button>
-          <p>v2.1.4</p>
+          <p>v2.1.5</p>
         </div>
       </div>
     </div>
