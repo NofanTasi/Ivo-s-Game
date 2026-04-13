@@ -3,7 +3,7 @@ export type Language = 'en' | 'nl' | 'fr' | 'es' | 'it';
 export const translations = {
   en: {
     title: "multiply",
-    boardSize: "Board Size (N)",
+    boardSize: "Board Size",
     gameMode: "Game Mode",
     modeAlone: "Play Alone (Exercise)",
     modeHumanHuman: "Human vs Human",
@@ -42,8 +42,8 @@ export const translations = {
     ttSquare: "Click to place your selected block here"
   },
   nl: {
-    title: "multiply",
-    boardSize: "Bordgrootte (N)",
+    title: "vermenigvuldig",
+    boardSize: "Bordgrootte",
     gameMode: "Spelmodus",
     modeAlone: "Alleen Spelen (Oefening)",
     modeHumanHuman: "Mens vs Mens",
@@ -82,8 +82,8 @@ export const translations = {
     ttSquare: "Klik om je geselecteerde blok hier te plaatsen"
   },
   fr: {
-    title: "multiply",
-    boardSize: "Taille du Plateau (N)",
+    title: "multiplier",
+    boardSize: "Taille du Plateau",
     gameMode: "Mode de Jeu",
     modeAlone: "Jouer Seul (Exercice)",
     modeHumanHuman: "Humain vs Humain",
@@ -122,8 +122,8 @@ export const translations = {
     ttSquare: "Cliquez pour placer votre bloc ici"
   },
   es: {
-    title: "multiply",
-    boardSize: "Tamaño del Tablero (N)",
+    title: "multiplicar",
+    boardSize: "Tamaño del Tablero",
     gameMode: "Modo de Juego",
     modeAlone: "Jugar Solo (Ejercicio)",
     modeHumanHuman: "Humano vs Humano",
@@ -162,8 +162,8 @@ export const translations = {
     ttSquare: "Haz clic para colocar tu bloque aquí"
   },
   it: {
-    title: "multiply",
-    boardSize: "Dimensione Tabellone (N)",
+    title: "moltiplica",
+    boardSize: "Dimensione Tabellone",
     gameMode: "Modalità di Gioco",
     modeAlone: "Gioca da Solo (Esercizio)",
     modeHumanHuman: "Umano vs Umano",

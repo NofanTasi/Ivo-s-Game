@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { translations, Language } from './translations';
+import { Miffy } from './components/Miffy';
 
 // --- Types ---
 
@@ -320,7 +321,8 @@ export default function App() {
                 <span className="text-[var(--color-vivid-yellow)] font-black">I</span>
               </div>
             </div>
-            <h1 className="text-2xl font-bold text-[var(--color-text-main)]">{t.title}</h1>
+            <h1 className="text-2xl font-bold text-[var(--color-text-main)] lowercase">{t.title}</h1>
+            <Miffy size={50} className="ml-2" />
           </div>
 
           <div className="space-y-6">
@@ -454,10 +456,12 @@ export default function App() {
               <span className="text-[var(--color-vivid-yellow)] font-black">I</span>
             </div>
           </div>
-          <h1 className="text-xl font-bold tracking-tight uppercase">{t.title}</h1>
+          <h1 className="text-xl font-bold tracking-tight lowercase">{t.title}</h1>
+          <Miffy size={32} />
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex items-center gap-4">
+          <div className="flex gap-2">
           <div className="flex items-center bg-[var(--color-bg-secondary)] rounded-lg border border-[var(--color-gray-700)] overflow-hidden">
             <button 
               onClick={() => setZoom(prev => Math.max(0.5, prev - 0.1))}
@@ -497,6 +501,7 @@ export default function App() {
           </button>
         </div>
       </div>
+    </div>
 
       {/* Scoreboard */}
       <div className={`max-w-7xl mx-auto grid gap-4 mb-8 ${gameState.mode === 'alone' ? 'grid-cols-1' : 'grid-cols-2'}`}>
