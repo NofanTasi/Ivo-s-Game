@@ -320,7 +320,7 @@ export default function App() {
                 <span className="text-[var(--color-vivid-yellow)] font-black">I</span>
               </div>
             </div>
-            <h1 className="text-2xl font-bold text-[var(--color-pure-black)]">{t.title}</h1>
+            <h1 className="text-2xl font-bold text-[var(--color-text-main)]">{t.title}</h1>
           </div>
 
           <div className="space-y-6">
@@ -413,12 +413,12 @@ export default function App() {
                 }
               }}
               title={t.ttForceUpdate}
-              className="text-[10px] font-mono text-[var(--color-gray-500)] hover:text-[var(--color-pure-black)] transition-colors uppercase tracking-widest flex items-center justify-center gap-1 mx-auto"
+              className="text-[10px] font-mono text-[var(--color-gray-500)] hover:text-[var(--color-gray-100)] transition-colors uppercase tracking-widest flex items-center justify-center gap-1 mx-auto"
             >
               <RotateCcw size={10} /> {t.forceUpdate}
             </button>
             <p className="text-[10px] font-mono text-[var(--color-gray-500)] uppercase tracking-widest">
-              v2.1.0
+              v2.1.1
             </p>
           </div>
         </motion.div>
@@ -585,10 +585,9 @@ export default function App() {
                   className={`
                     aspect-square flex items-center justify-center text-[10px] font-bold transition-all border
                     ${square.id === errorSquareId ? 'bg-[var(--color-soft-red)] border-[var(--color-pure-white)] text-[var(--color-pure-black)] z-20 scale-110' : 
-                      gameState.lastMove?.product === square.value ? 'bg-[var(--color-last-move)] border-[var(--color-pure-white)] text-[var(--color-pure-black)] z-10' :
                       square.highlighted ? 
-                      'bg-[var(--color-square-used)] border-[var(--color-soft-green)]/30 !text-black' : 
-                      'bg-[var(--color-bg-main)] border-[var(--color-gray-900)] text-[var(--color-gray-500)] hover:text-[var(--color-pure-black)] hover:border-[var(--color-gray-700)]'}
+                      'bg-[var(--color-square-used)] border-[var(--color-soft-green)]/30 text-[var(--color-pure-black)]' : 
+                      'bg-[var(--color-bg-main)] border-[var(--color-gray-900)] text-[var(--color-gray-500)] hover:text-[var(--color-gray-100)] hover:border-[var(--color-gray-700)]'}
                   `}
                 >
                   {square.value}
@@ -652,7 +651,7 @@ export default function App() {
               <div className="w-16 h-16 bg-[var(--color-soft-yellow)] text-[var(--color-pure-black)] rounded-full flex items-center justify-center mx-auto mb-6">
                 <Trophy size={32} />
               </div>
-              <h2 className="text-2xl font-bold text-[var(--color-pure-black)] mb-2">{t.gameOver}</h2>
+              <h2 className="text-2xl font-bold text-[var(--color-text-main)] mb-2">{t.gameOver}</h2>
               <p className="text-[var(--color-gray-300)] mb-6 font-bold">
                 {p1.score > p2.score ? `${p1.name} ${t.wins}` : p2.score > p1.score ? `${p2.name} ${t.wins}` : t.draw}
               </p>
@@ -697,11 +696,11 @@ export default function App() {
               }
             }}
             title={t.ttForceUpdate}
-            className="hover:text-[var(--color-pure-black)] transition-colors flex items-center gap-1"
+            className="hover:text-[var(--color-gray-100)] transition-colors flex items-center gap-1"
           >
             <RotateCcw size={10} /> {t.forceUpdate}
           </button>
-          <p>v2.1.0</p>
+          <p>v2.1.1</p>
         </div>
       </div>
     </div>

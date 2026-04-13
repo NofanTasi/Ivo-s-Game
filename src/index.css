@@ -39,8 +39,8 @@
   --color-block-unused: var(--color-soft-blue);
   --color-square-used: var(--color-soft-green);
   --color-last-move: var(--color-soft-yellow);
-  --color-text-main: var(--color-pure-black);
-  --color-text-muted: var(--color-gray-700);
+  --color-text-main: var(--color-gray-300);
+  --color-text-muted: var(--color-gray-500);
 }
 
 @layer base {
