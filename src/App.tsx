@@ -63,6 +63,7 @@ interface GameState {
   gameOver: boolean;
   history: string[];
   lastMove: { i: number; j: number; product: number; blockId: string } | null;
+  productFirstTouched: Record<number, number>;
 }
 
 // --- Constants ---
@@ -160,6 +161,7 @@ export default function App() {
       gameOver: false,
       history: [],
       lastMove: null,
+      productFirstTouched: {},
     });
     setShowSettings(false);
   }, [n, mode, t]);
@@ -208,6 +210,11 @@ export default function App() {
         
         const nextPlayer = prev.mode === 'alone' ? 'player1' : (prev.currentPlayer === 'player1' ? 'player2' : 'player1');
 
+        const newProductFirstTouched = { ...prev.productFirstTouched };
+        if (newProductFirstTouched[block.product] === undefined) {
+          newProductFirstTouched[block.product] = prev.history.length;
+        }
+
         return {
           ...prev,
           blocks: newBlocks,
@@ -223,7 +230,8 @@ export default function App() {
           },
           gameOver: allPlaced,
           lastMove: { i: block.i, j: block.j, product: block.product, blockId: block.id },
-          history: [...prev.history, `${prev.players[prev.currentPlayer].name}: ${block.i}×${block.j} = ${block.product}`]
+          history: [...prev.history, `${prev.players[prev.currentPlayer].name}: ${block.i}×${block.j} = ${block.product}`],
+          productFirstTouched: newProductFirstTouched
         };
       });
 
@@ -251,53 +259,67 @@ export default function App() {
       if (availableBlocks.length === 0) return;
 
       const lastMove = gameState.lastMove;
-      let chosenBlock: BlockData;
+      
+      // --- Invariant Calculation ---
+      const getProductCounts = (blocks: BlockData[]) => {
+        const counts: Record<number, number> = {};
+        blocks.forEach(b => {
+          if (!b.placed) {
+            counts[b.product] = (counts[b.product] || 0) + 1;
+          }
+        });
+        return counts;
+      };
 
-      // 1. Identify blocks that score points (product already highlighted)
-      const scoringBlocks = availableBlocks.filter(b => {
-        const square = gameState.squares.find(s => s.value === b.product);
-        return square && square.highlighted;
+      const currentCounts = getProductCounts(gameState.blocks);
+      
+      // Identify moves that maintain the invariant (even number of odd sets)
+      const winningMoves = availableBlocks.filter(move => {
+        const nextCounts = { ...currentCounts };
+        nextCounts[move.product]--;
+        if (nextCounts[move.product] === 0) delete nextCounts[move.product];
+        
+        const oddCount = Object.values(nextCounts).filter(c => c % 2 !== 0).length;
+        return oddCount % 2 === 0;
       });
 
-      // 2. Identify blocks that respond to the last move (same product)
-      const responseBlocks = lastMove 
-        ? availableBlocks.filter(b => b.product === lastMove.product)
-        : [];
+      const candidates = winningMoves.length > 0 ? winningMoves : availableBlocks;
 
-      let candidates: BlockData[] = [];
+      // --- Obfuscation Ranking ---
+      const rankedCandidates = candidates.sort((a, b) => {
+        // 1. Maximize number of odd sets
+        const getOddCount = (move: BlockData) => {
+          const nextCounts = { ...currentCounts };
+          nextCounts[move.product]--;
+          return Object.values(nextCounts).filter(c => c % 2 !== 0).length;
+        };
+        const oddA = getOddCount(a);
+        const oddB = getOddCount(b);
+        if (oddA !== oddB) return oddB - oddA;
 
-      if (responseBlocks.length > 0) {
-        // --- "Less Straightforward" Logic for Response ---
-        if (lastMove!.i !== lastMove!.j) {
-          // If human played (i,j), avoid (j,i) if other (k,l) with same product exist
-          const others = responseBlocks.filter(b => !(b.i === lastMove!.j && b.j === lastMove!.i));
-          candidates = others.length > 0 ? others : responseBlocks;
-        } else {
-          // If human played (d,d), avoid another square (e,e) if other (k,l) exist
-          const others = responseBlocks.filter(b => b.i !== b.j);
-          candidates = others.length > 0 ? others : responseBlocks;
+        // 2. Prefer larger remaining sets Sp
+        const countA = currentCounts[a.product];
+        const countB = currentCounts[b.product];
+        if (countA !== countB) return countB - countA;
+
+        // 3. Delay mirror move (j,i)
+        if (lastMove) {
+          const isMirrorA = a.i === lastMove.j && a.j === lastMove.i;
+          const isMirrorB = b.i === lastMove.j && b.j === lastMove.i;
+          if (isMirrorA !== isMirrorB) return isMirrorA ? 1 : -1;
         }
-      } else if (scoringBlocks.length > 0) {
-        // If we can score elsewhere, take it
-        candidates = scoringBlocks;
-      } else {
-        // --- Strategic "Opening" Moves ---
-        // Prefer perfect squares (i=j) to control parity in the early/mid game
-        const perfectSquares = availableBlocks.filter(b => b.i === b.j);
-        if (perfectSquares.length > 0) {
-          candidates = perfectSquares;
-        } else {
-          // Otherwise, pick a random block but try to mask the strategy
-          candidates = availableBlocks;
-        }
-      }
 
-      // Pick from candidates, with a small chance of a purely random move to remain unpredictable
-      if (Math.random() > 0.1 && candidates.length > 0) {
-        chosenBlock = candidates[Math.floor(Math.random() * candidates.length)];
-      } else {
-        chosenBlock = availableBlocks[Math.floor(Math.random() * availableBlocks.length)];
-      }
+        // 4. Delay products played earliest
+        const firstA = gameState.productFirstTouched[a.product] ?? Infinity;
+        const firstB = gameState.productFirstTouched[b.product] ?? Infinity;
+        if (firstA !== firstB) return firstB - firstA;
+
+        return 0;
+      });
+
+      // Pick the best candidate (top of sorted list)
+      // Small randomness to avoid being 100% predictable
+      const chosenBlock = Math.random() > 0.1 ? rankedCandidates[0] : rankedCandidates[Math.floor(Math.random() * rankedCandidates.length)];
 
       // Execute AI Turn
       selectBlock(chosenBlock.id);
