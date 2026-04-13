@@ -2,7 +2,7 @@ export type Language = 'en' | 'nl' | 'fr' | 'es' | 'it';
 
 export const translations = {
   en: {
-    title: "Multiplication Quest",
+    title: "multiply",
     boardSize: "Board Size (N)",
     gameMode: "Game Mode",
     modeAlone: "Play Alone (Exercise)",
@@ -42,7 +42,7 @@ export const translations = {
     ttSquare: "Click to place your selected block here"
   },
   nl: {
-    title: "Vermenigvuldigings Quest",
+    title: "multiply",
     boardSize: "Bordgrootte (N)",
     gameMode: "Spelmodus",
     modeAlone: "Alleen Spelen (Oefening)",
@@ -82,7 +82,7 @@ export const translations = {
     ttSquare: "Klik om je geselecteerde blok hier te plaatsen"
   },
   fr: {
-    title: "Quête de Multiplication",
+    title: "multiply",
     boardSize: "Taille du Plateau (N)",
     gameMode: "Mode de Jeu",
     modeAlone: "Jouer Seul (Exercice)",
@@ -122,7 +122,7 @@ export const translations = {
     ttSquare: "Cliquez pour placer votre bloc ici"
   },
   es: {
-    title: "Misión de Multiplicación",
+    title: "multiply",
     boardSize: "Tamaño del Tablero (N)",
     gameMode: "Modo de Juego",
     modeAlone: "Jugar Solo (Ejercicio)",
@@ -162,7 +162,7 @@ export const translations = {
     ttSquare: "Haz clic para colocar tu bloque aquí"
   },
   it: {
-    title: "Sfida di Moltiplicazione",
+    title: "multiply",
     boardSize: "Dimensione Tabellone (N)",
     gameMode: "Modalità di Gioco",
     modeAlone: "Gioca da Solo (Esercizio)",

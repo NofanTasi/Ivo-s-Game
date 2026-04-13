@@ -1,5 +1,5 @@
 {
-  "name": "Multiplication Quest",
+  "name": "multiply",
   "description": "A strategic arithmetic game where players compete to master multiplication tables by placing blocks on a product field.",
   "requestFramePermissions": []
 }
