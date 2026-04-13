@@ -418,7 +418,7 @@ export default function App() {
               <RotateCcw size={10} /> {t.forceUpdate}
             </button>
             <p className="text-[10px] font-mono text-[var(--color-gray-500)] uppercase tracking-widest">
-              v2.0.6 • Icon Refined
+              v2.0.9 • UI Refined
             </p>
           </div>
         </motion.div>
