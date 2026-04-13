@@ -21,9 +21,11 @@ import {
   Maximize,
   Lightbulb,
   Sparkles,
-  History
+  History,
+  Globe
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { translations, Language } from './translations';
 
 // --- Types ---
 
@@ -103,10 +105,13 @@ const generateSquares = (n: number): SquareData[] => {
 export default function App() {
   const [n, setN] = useState(9);
   const [mode, setMode] = useState<GameMode>('human-computer');
+  const [language, setLanguage] = useState<Language>('en');
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [showSettings, setShowSettings] = useState(true);
   const [zoom, setZoom] = useState(1);
   const [errorSquareId, setErrorSquareId] = useState<number | null>(null);
+
+  const t = translations[language];
 
   // Initialize Game
   const initGame = useCallback(() => {
@@ -121,7 +126,7 @@ export default function App() {
     switch (mode) {
       case 'alone':
         p1Type = 'human';
-        p2Type = 'human'; // Doesn't matter much
+        p2Type = 'human';
         break;
       case 'human-human':
         p1Type = 'human';
@@ -130,12 +135,12 @@ export default function App() {
       case 'computer-human':
         p1Type = 'ai';
         p2Type = 'human';
-        currentPlayer = 'player1'; // AI starts
+        currentPlayer = 'player1';
         break;
       case 'human-computer':
         p1Type = 'human';
         p2Type = 'ai';
-        currentPlayer = 'player1'; // Human starts
+        currentPlayer = 'player1';
         break;
     }
 
@@ -143,8 +148,8 @@ export default function App() {
       n,
       mode,
       players: {
-        player1: { type: p1Type, score: 0, name: p1Type === 'ai' ? 'Computer' : 'Player 1' },
-        player2: { type: p2Type, score: 0, name: p2Type === 'ai' ? 'Computer' : (mode === 'alone' ? 'Exercise' : 'Player 2') },
+        player1: { type: p1Type, score: 0, name: p1Type === 'ai' ? t.computer : t.player1 },
+        player2: { type: p2Type, score: 0, name: p2Type === 'ai' ? t.computer : (mode === 'alone' ? t.exercise : t.player2) },
       },
       currentPlayer,
       blocks: initialBlocks,
@@ -155,7 +160,7 @@ export default function App() {
       lastMove: null,
     });
     setShowSettings(false);
-  }, [n, mode]);
+  }, [n, mode, t]);
 
   // Handle Block Selection
   const selectBlock = useCallback((id: string) => {
@@ -216,7 +221,7 @@ export default function App() {
           },
           gameOver: allPlaced,
           lastMove: { i: block.i, j: block.j, product: block.product, blockId: block.id },
-          history: [...prev.history, `${prev.players[prev.currentPlayer].name} moved`]
+          history: [...prev.history, `${prev.players[prev.currentPlayer].name} ${t.moved}`]
         };
       });
 
@@ -301,12 +306,31 @@ export default function App() {
             <div className="bg-[var(--color-pure-red)] p-3 rounded-lg">
               <Trophy className="text-[var(--color-pure-white)] w-6 h-6" />
             </div>
-            <h1 className="text-2xl font-bold text-[var(--color-pure-white)]">Multiplication Quest</h1>
+            <h1 className="text-2xl font-bold text-[var(--color-pure-white)]">{t.title}</h1>
           </div>
 
           <div className="space-y-6">
             <div>
-              <label className="block text-xs font-bold text-[var(--color-gray-500)] uppercase tracking-widest mb-3">Board Size (N)</label>
+              <label className="block text-xs font-bold text-[var(--color-gray-500)] uppercase tracking-widest mb-3">{t.language}</label>
+              <div className="grid grid-cols-5 gap-2">
+                {(['en', 'nl', 'fr', 'es', 'it'] as Language[]).map(lang => (
+                  <button
+                    key={lang}
+                    onClick={() => setLanguage(lang)}
+                    className={`py-2 rounded-lg font-bold transition-all border text-xs ${
+                      language === lang 
+                        ? 'bg-[var(--color-pure-magenta)] border-[var(--color-pure-magenta)] text-[var(--color-pure-white)]' 
+                        : 'bg-transparent border-[var(--color-gray-700)] text-[var(--color-gray-300)] hover:border-[var(--color-gray-500)]'
+                    }`}
+                  >
+                    {lang.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-[var(--color-gray-500)] uppercase tracking-widest mb-3">{t.boardSize}</label>
               <div className="grid grid-cols-4 gap-2">
                 {[7, 8, 9, 10, 11, 12, 13].map(val => (
                   <button
@@ -325,13 +349,13 @@ export default function App() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-[var(--color-gray-500)] uppercase tracking-widest mb-3">Game Mode</label>
+              <label className="block text-xs font-bold text-[var(--color-gray-500)] uppercase tracking-widest mb-3">{t.gameMode}</label>
               <div className="grid grid-cols-1 gap-2">
                 {[
-                  { id: 'alone', label: 'Play Alone (Exercise)', icon: <User size={18} /> },
-                  { id: 'human-human', label: 'Human vs Human', icon: <User size={18} /> },
-                  { id: 'computer-human', label: 'Computer vs Human (AI Starts)', icon: <Cpu size={18} /> },
-                  { id: 'human-computer', label: 'Human vs Computer (You Start)', icon: <Cpu size={18} /> }
+                  { id: 'alone', label: t.modeAlone, icon: <User size={18} /> },
+                  { id: 'human-human', label: t.modeHumanHuman, icon: <User size={18} /> },
+                  { id: 'computer-human', label: t.modeAiHuman, icon: <Cpu size={18} /> },
+                  { id: 'human-computer', label: t.modeHumanAi, icon: <Cpu size={18} /> }
                 ].map(m => (
                   <button
                     key={m.id}
@@ -352,7 +376,7 @@ export default function App() {
               onClick={initGame}
               className="w-full bg-[var(--color-pure-green)] hover:opacity-90 text-[var(--color-pure-black)] py-4 rounded-lg font-bold text-lg transition-all flex items-center justify-center gap-2 mt-4"
             >
-              Start Game <ChevronRight size={20} />
+              {t.startGame} <ChevronRight size={20} />
             </button>
           </div>
           {/* Version Info */}
@@ -372,7 +396,7 @@ export default function App() {
               }}
               className="text-[10px] font-mono text-[var(--color-gray-500)] hover:text-[var(--color-pure-white)] transition-colors uppercase tracking-widest flex items-center justify-center gap-1 mx-auto"
             >
-              <RotateCcw size={10} /> Force Update
+              <RotateCcw size={10} /> {t.forceUpdate}
             </button>
             <p className="text-[10px] font-mono text-[var(--color-gray-500)] uppercase tracking-widest">
               v2.0.6 • Icon Refined
@@ -411,7 +435,7 @@ export default function App() {
               <span className="text-[var(--color-pure-yellow)] font-black">I</span>
             </div>
           </div>
-          <h1 className="text-xl font-bold tracking-tight uppercase">Multiplication Quest</h1>
+          <h1 className="text-xl font-bold tracking-tight uppercase">{t.title}</h1>
         </div>
 
         <div className="flex gap-2">
@@ -456,7 +480,7 @@ export default function App() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               {p1.type === 'ai' ? <Cpu size={16} /> : <User size={16} />}
-              <span className="font-bold text-sm uppercase">{gameState.mode === 'alone' ? 'Exercise Mode' : p1.name}</span>
+              <span className="font-bold text-sm uppercase">{gameState.mode === 'alone' ? t.exerciseMode : p1.name}</span>
             </div>
             <span className="text-2xl font-bold">{p1.score}</span>
           </div>
@@ -487,9 +511,9 @@ export default function App() {
           {/* Left: The Box */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-bold uppercase tracking-widest text-[var(--color-gray-500)]">The Box</h2>
+              <h2 className="text-sm font-bold uppercase tracking-widest text-[var(--color-gray-500)]">{t.theBox}</h2>
               <span className="text-xs font-bold text-[var(--color-gray-500)]">
-                {gameState.blocks.filter(b => !b.placed).length} Blocks
+                {gameState.blocks.filter(b => !b.placed).length} {t.blocks}
               </span>
             </div>
             
@@ -519,7 +543,7 @@ export default function App() {
 
           {/* Right: Field Board */}
           <div className="space-y-4">
-            <h2 className="text-sm font-bold uppercase tracking-widest text-[var(--color-gray-500)]">The Field</h2>
+            <h2 className="text-sm font-bold uppercase tracking-widest text-[var(--color-gray-500)]">{t.theField}</h2>
             
             <div 
               className="grid gap-1 bg-[var(--color-bg-secondary)] p-2 rounded-lg border border-[var(--color-gray-700)]"
@@ -552,7 +576,7 @@ export default function App() {
       <div className="max-w-7xl mx-auto mt-8">
         <div className="bg-[var(--color-bg-secondary)] p-4 rounded-lg border border-[var(--color-gray-700)]">
           <h3 className="text-xs font-bold text-[var(--color-gray-500)] uppercase tracking-widest mb-4 flex items-center gap-2">
-            <History size={14} /> Log
+            <History size={14} /> {t.log}
           </h3>
           <div className="h-24 overflow-y-auto space-y-1 pr-2 custom-scrollbar text-[10px] font-mono">
             {gameState.history.slice().reverse().map((log, i) => (
@@ -580,9 +604,9 @@ export default function App() {
               <div className="w-16 h-16 bg-[var(--color-pure-yellow)] text-[var(--color-pure-black)] rounded-full flex items-center justify-center mx-auto mb-6">
                 <Trophy size={32} />
               </div>
-              <h2 className="text-2xl font-bold text-[var(--color-pure-white)] mb-2">Game Over</h2>
+              <h2 className="text-2xl font-bold text-[var(--color-pure-white)] mb-2">{t.gameOver}</h2>
               <p className="text-[var(--color-gray-300)] mb-6 font-bold">
-                {p1.score > p2.score ? `${p1.name} wins!` : p2.score > p1.score ? `${p2.name} wins!` : "It's a draw!"}
+                {p1.score > p2.score ? `${p1.name} ${t.wins}` : p2.score > p1.score ? `${p2.name} ${t.wins}` : t.draw}
               </p>
               
               <div className="grid grid-cols-2 gap-4 mb-8">
@@ -600,7 +624,7 @@ export default function App() {
                 onClick={() => setShowSettings(true)}
                 className="w-full bg-[var(--color-pure-blue)] text-[var(--color-pure-white)] py-3 rounded-lg font-bold transition-all"
               >
-                Play Again
+                {t.playAgain}
               </button>
             </motion.div>
           </motion.div>
