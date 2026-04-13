@@ -305,14 +305,14 @@ export default function App() {
         >
           <div className="flex items-center gap-4 mb-8">
             {/* Custom IVO Logo */}
-            <div className="font-mono leading-none select-none text-xl">
+            <div className="font-mono leading-none select-none text-xl bg-black border border-white p-2 rounded">
               <div className="flex gap-2 mb-1">
                 <span className="text-[var(--color-vivid-red)] font-black">I</span>
                 <span className="text-[var(--color-vivid-green)] font-black">V</span>
                 <span className="text-[var(--color-vivid-blue)] font-black">O</span>
               </div>
               <div className="flex justify-center mb-1">
-                <span className="text-[var(--color-pure-black)] font-black">x</span>
+                <span className="text-white font-black">x</span>
               </div>
               <div className="flex gap-2">
                 <span className="text-[var(--color-vivid-cyan)] font-black">O</span>
@@ -418,7 +418,7 @@ export default function App() {
               <RotateCcw size={10} /> {t.forceUpdate}
             </button>
             <p className="text-[10px] font-mono text-[var(--color-gray-500)] uppercase tracking-widest">
-              v2.0.9 • UI Refined
+              v2.1.0
             </p>
           </div>
         </motion.div>
@@ -439,14 +439,14 @@ export default function App() {
       <div className="max-w-7xl mx-auto mb-8 flex justify-between items-center">
         <div className="flex items-center gap-6">
           {/* Custom IVO Logo */}
-          <div className="font-mono leading-none select-none">
+          <div className="font-mono leading-none select-none bg-black border border-white p-2 rounded">
             <div className="flex gap-2 mb-1">
               <span className="text-[var(--color-vivid-red)] font-black">I</span>
               <span className="text-[var(--color-vivid-green)] font-black">V</span>
               <span className="text-[var(--color-vivid-blue)] font-black">O</span>
             </div>
             <div className="flex justify-center mb-1">
-              <span className="text-[var(--color-pure-black)] font-black">x</span>
+              <span className="text-white font-black">x</span>
             </div>
             <div className="flex gap-2">
               <span className="text-[var(--color-vivid-cyan)] font-black">O</span>
@@ -701,7 +701,7 @@ export default function App() {
           >
             <RotateCcw size={10} /> {t.forceUpdate}
           </button>
-          <p>v2.0.9 • UI Refined</p>
+          <p>v2.1.0</p>
         </div>
       </div>
     </div>

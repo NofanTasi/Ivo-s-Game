@@ -17,12 +17,12 @@
   --color-vivid-yellow: #ffff00;
 
   /* Soft UI Colors */
-  --color-soft-red: #ef9a9a;
-  --color-soft-green: #a5d6a7;
-  --color-soft-blue: #90caf9;
-  --color-soft-cyan: #80deea;
-  --color-soft-magenta: #f48fb1;
-  --color-soft-yellow: #fff59d;
+  --color-soft-red: #ff8888;
+  --color-soft-green: #88ff88;
+  --color-soft-blue: #8888ff;
+  --color-soft-cyan: #00ffff;
+  --color-soft-magenta: #ff00ff;
+  --color-soft-yellow: #888844;
   
   /* Pure BW */
   --color-pure-black: #000000;
