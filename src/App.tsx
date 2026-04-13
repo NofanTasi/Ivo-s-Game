@@ -344,6 +344,12 @@ export default function App() {
           if (isMirrorA !== isMirrorB) return isMirrorA - isMirrorB;
         }
 
+        // 3. Obscurity: Delay Diagonal Moves (i,i)
+        // "do not place another (e,e) if other choices (k,l) with k*l=d^2 are still available"
+        const isDiagonalA = a.i === a.j ? 1 : 0;
+        const isDiagonalB = b.i === b.j ? 1 : 0;
+        if (isDiagonalA !== isDiagonalB) return isDiagonalA - isDiagonalB;
+
         if (isWinning) {
           // WINNING: Maintain Invariant + Obscure Complexity
           // 3. Obfuscation: Maximize resulting odd sets (Complexity)
