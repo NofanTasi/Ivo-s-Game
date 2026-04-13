@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mult-quest-v2.0.5';
+const CACHE_NAME = 'mult-quest-v2.0.6';
 const ASSETS = [
   '/',
   '/index.html',

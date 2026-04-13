@@ -2,16 +2,16 @@
   <rect width="512" height="512" rx="64" fill="#1a1a1a"/>
   <g font-family="monospace" font-weight="900" text-anchor="middle">
     <!-- Row 1 -->
-    <text x="156" y="180" font-size="120" fill="#ff4d4d">I</text>
-    <text x="256" y="180" font-size="120" fill="#4dff4d">V</text>
-    <text x="356" y="180" font-size="120" fill="#4d4dff">O</text>
+    <text x="176" y="200" font-size="100" fill="#ff4d4d">I</text>
+    <text x="256" y="200" font-size="100" fill="#4dff4d">V</text>
+    <text x="336" y="200" font-size="100" fill="#4d4dff">O</text>
     
     <!-- Row 2 -->
-    <text x="256" y="290" font-size="100" fill="#ffffff">x</text>
+    <text x="256" y="290" font-size="80" fill="#ffffff">x</text>
     
     <!-- Row 3 -->
-    <text x="156" y="400" font-size="120" fill="#4dffff">O</text>
-    <text x="256" y="400" font-size="120" fill="#ff4dff">^</text>
-    <text x="356" y="400" font-size="120" fill="#ffff4d">I</text>
+    <text x="176" y="380" font-size="100" fill="#4dffff">O</text>
+    <text x="256" y="380" font-size="100" fill="#ff4dff">^</text>
+    <text x="336" y="380" font-size="100" fill="#ffff4d">I</text>
   </g>
 </svg>
