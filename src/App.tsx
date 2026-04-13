@@ -322,55 +322,69 @@ export default function App() {
         const oddCount = Object.values(nextCounts).filter(c => c % 2 !== 0).length;
         return oddCount % 2 === 0;
       });
-
-      const candidates = winningMoves.length > 0 ? winningMoves : availableBlocks;
+      const isWinning = winningMoves.length > 0;
+      const candidates = isWinning ? winningMoves : availableBlocks;
 
       // --- Obfuscation Ranking ---
       const rankedCandidates = candidates.sort((a, b) => {
         const sqA = squareMap.get(a.product);
         const sqB = squareMap.get(b.product);
 
-        // 1. Immediate Point Gain (Efficiency)
-        // A point is gained if the square is already highlighted (at least one block placed there)
-        const gainA = sqA?.highlighted ? 1 : 0;
-        const gainB = sqB?.highlighted ? 1 : 0;
-        if (gainA !== gainB) return gainB - gainA;
+        // 1. Obscurity: Delay Reaction to last product (Highest Priority)
+        // "not react to (i,j) with (k,l) for which k*l=p as long as possible"
+        if (lastMove) {
+          const isReactionA = a.product === lastMove.product ? 1 : 0;
+          const isReactionB = b.product === lastMove.product ? 1 : 0;
+          if (isReactionA !== isReactionB) return isReactionA - isReactionB;
 
-        // 2. Safe Play: Finish a set of size 1
-        // Playing the last block of a product gains no point but doesn't leave one for the opponent.
-        const isSizeOneA = currentCounts[a.product] === 1 ? 1 : 0;
-        const isSizeOneB = currentCounts[b.product] === 1 ? 1 : 0;
-        if (isSizeOneA !== isSizeOneB) return isSizeOneB - isSizeOneA;
+          // 2. Obscurity: Delay Mirror Move (j,i)
+          // "for i<>j do not place (j,i) if other choices (k,l) with k*l=i*j still are available"
+          const isMirrorA = a.i === lastMove.j && a.j === lastMove.i ? 1 : 0;
+          const isMirrorB = b.i === lastMove.j && b.j === lastMove.i ? 1 : 0;
+          if (isMirrorA !== isMirrorB) return isMirrorA - isMirrorB;
+        }
 
-        // 3. Strategic: Avoid giving away points (prefer odd sets over even sets)
-        // Prefer playing from an already odd set (parity-reducing) over starting an even set (parity-increasing)
+        if (isWinning) {
+          // WINNING: Maintain Invariant + Obscure Complexity
+          // 3. Obfuscation: Maximize resulting odd sets (Complexity)
+          // "maximizing even amount of p for which #Sp is odd"
+          const getOddCount = (move: BlockData) => {
+            const nextCounts = { ...currentCounts };
+            nextCounts[move.product]--;
+            return Object.values(nextCounts).filter(c => c % 2 !== 0).length;
+          };
+          const oddA = getOddCount(a);
+          const oddB = getOddCount(b);
+          if (oddA !== oddB) return oddB - oddA;
+
+          // 4. Immediate Point Gain
+          const gainA = sqA?.highlighted ? 1 : 0;
+          const gainB = sqB?.highlighted ? 1 : 0;
+          if (gainA !== gainB) return gainB - gainA;
+        } else {
+          // LOSING: Try to catch up but stay obscure (already handled by reaction delay above)
+          // 3. Immediate Point Gain
+          const gainA = sqA?.highlighted ? 1 : 0;
+          const gainB = sqB?.highlighted ? 1 : 0;
+          if (gainA !== gainB) return gainB - gainA;
+
+          // 4. Safe Play: Finish a set of size 1
+          const isSizeOneA = currentCounts[a.product] === 1 ? 1 : 0;
+          const isSizeOneB = currentCounts[b.product] === 1 ? 1 : 0;
+          if (isSizeOneA !== isSizeOneB) return isSizeOneB - isSizeOneA;
+        }
+
+        // 5. Strategic: Avoid giving away points
         const isOddA = currentCounts[a.product] % 2 !== 0 ? 1 : 0;
         const isOddB = currentCounts[b.product] % 2 !== 0 ? 1 : 0;
         if (isOddA !== isOddB) return isOddB - isOddA;
 
-        // 4. Obfuscation: Maximize resulting odd sets (Complexity)
-        const getOddCount = (move: BlockData) => {
-          const nextCounts = { ...currentCounts };
-          nextCounts[move.product]--;
-          return Object.values(nextCounts).filter(c => c % 2 !== 0).length;
-        };
-        const oddA = getOddCount(a);
-        const oddB = getOddCount(b);
-        if (oddA !== oddB) return oddB - oddA;
-
-        // 4. Prefer larger remaining sets Sp
+        // 6. Prefer larger remaining sets Sp
         const countA = currentCounts[a.product];
         const countB = currentCounts[b.product];
         if (countA !== countB) return countB - countA;
 
-        // 3. Delay mirror move (j,i)
-        if (lastMove) {
-          const isMirrorA = a.i === lastMove.j && a.j === lastMove.i;
-          const isMirrorB = b.i === lastMove.j && b.j === lastMove.i;
-          if (isMirrorA !== isMirrorB) return isMirrorA ? 1 : -1;
-        }
-
-        // 4. Delay products played earliest
+        // 7. Delay products played earliest
         const firstA = gameState.productFirstTouched[a.product] ?? Infinity;
         const firstB = gameState.productFirstTouched[b.product] ?? Infinity;
         if (firstA !== firstB) return firstB - firstA;
