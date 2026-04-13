@@ -108,6 +108,7 @@ export default function App() {
   const [language, setLanguage] = useState<Language>('en');
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [showSettings, setShowSettings] = useState(true);
+  const [showLog, setShowLog] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [errorSquareId, setErrorSquareId] = useState<number | null>(null);
 
@@ -221,7 +222,7 @@ export default function App() {
           },
           gameOver: allPlaced,
           lastMove: { i: block.i, j: block.j, product: block.product, blockId: block.id },
-          history: [...prev.history, `${prev.players[prev.currentPlayer].name} ${t.moved}`]
+          history: [...prev.history, `${prev.players[prev.currentPlayer].name}: ${block.i}×${block.j} = ${block.product}`]
         };
       });
 
@@ -574,17 +575,37 @@ export default function App() {
 
       {/* Game Log */}
       <div className="max-w-7xl mx-auto mt-8">
-        <div className="bg-[var(--color-bg-secondary)] p-4 rounded-lg border border-[var(--color-gray-700)]">
-          <h3 className="text-xs font-bold text-[var(--color-gray-500)] uppercase tracking-widest mb-4 flex items-center gap-2">
-            <History size={14} /> {t.log}
-          </h3>
-          <div className="h-24 overflow-y-auto space-y-1 pr-2 custom-scrollbar text-[10px] font-mono">
-            {gameState.history.slice().reverse().map((log, i) => (
-              <div key={i} className="text-[var(--color-gray-500)] border-b border-[var(--color-gray-900)] pb-1">
-                {log}
-              </div>
-            ))}
-          </div>
+        <div className="bg-[var(--color-bg-secondary)] rounded-lg border border-[var(--color-gray-700)] overflow-hidden">
+          <button 
+            onClick={() => setShowLog(!showLog)}
+            className="w-full p-4 flex items-center justify-between hover:bg-[var(--color-gray-700)] transition-colors"
+          >
+            <h3 className="text-xs font-bold text-[var(--color-gray-500)] uppercase tracking-widest flex items-center gap-2">
+              <History size={14} /> {t.log}
+            </h3>
+            <div className="text-[var(--color-gray-500)]">
+              {showLog ? <ChevronRight size={16} className="rotate-90 transition-transform" /> : <ChevronRight size={16} className="transition-transform" />}
+            </div>
+          </button>
+          
+          <AnimatePresence>
+            {showLog && (
+              <motion.div 
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="border-t border-[var(--color-gray-700)]"
+              >
+                <div className="p-4 h-32 overflow-y-auto space-y-1 pr-2 custom-scrollbar text-[10px] font-mono">
+                  {gameState.history.slice().reverse().map((log, i) => (
+                    <div key={i} className="text-[var(--color-gray-500)] border-b border-[var(--color-gray-900)] pb-1">
+                      {log}
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 
