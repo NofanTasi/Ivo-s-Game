@@ -304,10 +304,23 @@ export default function App() {
           className="bg-[var(--color-bg-secondary)] rounded-2xl shadow-2xl p-8 max-w-md w-full border border-[var(--color-gray-700)]"
         >
           <div className="flex items-center gap-4 mb-8">
-            <div className="bg-[var(--color-pure-red)] p-3 rounded-lg">
-              <Trophy className="text-[var(--color-pure-white)] w-6 h-6" />
+            {/* Custom IVO Logo */}
+            <div className="font-mono leading-none select-none text-xl">
+              <div className="flex gap-2 mb-1">
+                <span className="text-[var(--color-vivid-red)] font-black">I</span>
+                <span className="text-[var(--color-vivid-green)] font-black">V</span>
+                <span className="text-[var(--color-vivid-blue)] font-black">O</span>
+              </div>
+              <div className="flex justify-center mb-1">
+                <span className="text-[var(--color-pure-black)] font-black">x</span>
+              </div>
+              <div className="flex gap-2">
+                <span className="text-[var(--color-vivid-cyan)] font-black">O</span>
+                <span className="text-[var(--color-vivid-magenta)] font-black">^</span>
+                <span className="text-[var(--color-vivid-yellow)] font-black">I</span>
+              </div>
             </div>
-            <h1 className="text-2xl font-bold text-[var(--color-pure-white)]">{t.title}</h1>
+            <h1 className="text-2xl font-bold text-[var(--color-pure-black)]">{t.title}</h1>
           </div>
 
           <div className="space-y-6">
@@ -318,9 +331,10 @@ export default function App() {
                   <button
                     key={lang}
                     onClick={() => setLanguage(lang)}
+                    title={t.ttLanguage}
                     className={`py-2 rounded-lg font-bold transition-all border text-xs ${
                       language === lang 
-                        ? 'bg-[var(--color-pure-magenta)] border-[var(--color-pure-magenta)] text-[var(--color-pure-white)]' 
+                        ? 'bg-[var(--color-soft-magenta)] border-[var(--color-soft-magenta)] text-[var(--color-pure-black)]' 
                         : 'bg-transparent border-[var(--color-gray-700)] text-[var(--color-gray-300)] hover:border-[var(--color-gray-500)]'
                     }`}
                   >
@@ -337,9 +351,10 @@ export default function App() {
                   <button
                     key={val}
                     onClick={() => setN(val)}
+                    title={t.ttBoardSize}
                     className={`py-2 rounded-lg font-bold transition-all border ${
                       n === val 
-                        ? 'bg-[var(--color-pure-blue)] border-[var(--color-pure-blue)] text-[var(--color-pure-white)]' 
+                        ? 'bg-[var(--color-soft-blue)] border-[var(--color-soft-blue)] text-[var(--color-pure-black)]' 
                         : 'bg-transparent border-[var(--color-gray-700)] text-[var(--color-gray-300)] hover:border-[var(--color-gray-500)]'
                     }`}
                   >
@@ -361,9 +376,10 @@ export default function App() {
                   <button
                     key={m.id}
                     onClick={() => setMode(m.id as GameMode)}
+                    title={t.ttGameMode}
                     className={`flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-all border ${
                       mode === m.id 
-                        ? 'bg-[var(--color-pure-blue)] border-[var(--color-pure-blue)] text-[var(--color-pure-white)]' 
+                        ? 'bg-[var(--color-soft-blue)] border-[var(--color-soft-blue)] text-[var(--color-pure-black)]' 
                         : 'bg-transparent border-[var(--color-gray-700)] text-[var(--color-gray-300)] hover:border-[var(--color-gray-500)]'
                     }`}
                   >
@@ -375,7 +391,8 @@ export default function App() {
 
             <button
               onClick={initGame}
-              className="w-full bg-[var(--color-pure-green)] hover:opacity-90 text-[var(--color-pure-black)] py-4 rounded-lg font-bold text-lg transition-all flex items-center justify-center gap-2 mt-4"
+              title={t.ttStart}
+              className="w-full bg-[var(--color-soft-green)] hover:opacity-90 text-[var(--color-pure-black)] py-4 rounded-lg font-bold text-lg transition-all flex items-center justify-center gap-2 mt-4"
             >
               {t.startGame} <ChevronRight size={20} />
             </button>
@@ -395,7 +412,8 @@ export default function App() {
                   window.location.reload();
                 }
               }}
-              className="text-[10px] font-mono text-[var(--color-gray-500)] hover:text-[var(--color-pure-white)] transition-colors uppercase tracking-widest flex items-center justify-center gap-1 mx-auto"
+              title={t.ttForceUpdate}
+              className="text-[10px] font-mono text-[var(--color-gray-500)] hover:text-[var(--color-pure-black)] transition-colors uppercase tracking-widest flex items-center justify-center gap-1 mx-auto"
             >
               <RotateCcw size={10} /> {t.forceUpdate}
             </button>
@@ -423,17 +441,17 @@ export default function App() {
           {/* Custom IVO Logo */}
           <div className="font-mono leading-none select-none">
             <div className="flex gap-2 mb-1">
-              <span className="text-[var(--color-pure-red)] font-black">I</span>
-              <span className="text-[var(--color-pure-green)] font-black">V</span>
-              <span className="text-[var(--color-pure-blue)] font-black">O</span>
+              <span className="text-[var(--color-vivid-red)] font-black">I</span>
+              <span className="text-[var(--color-vivid-green)] font-black">V</span>
+              <span className="text-[var(--color-vivid-blue)] font-black">O</span>
             </div>
             <div className="flex justify-center mb-1">
-              <span className="text-[var(--color-pure-white)] font-black">x</span>
+              <span className="text-[var(--color-pure-black)] font-black">x</span>
             </div>
             <div className="flex gap-2">
-              <span className="text-[var(--color-pure-cyan)] font-black">O</span>
-              <span className="text-[var(--color-pure-magenta)] font-black">^</span>
-              <span className="text-[var(--color-pure-yellow)] font-black">I</span>
+              <span className="text-[var(--color-vivid-cyan)] font-black">O</span>
+              <span className="text-[var(--color-vivid-magenta)] font-black">^</span>
+              <span className="text-[var(--color-vivid-yellow)] font-black">I</span>
             </div>
           </div>
           <h1 className="text-xl font-bold tracking-tight uppercase">{t.title}</h1>
@@ -443,18 +461,21 @@ export default function App() {
           <div className="flex items-center bg-[var(--color-bg-secondary)] rounded-lg border border-[var(--color-gray-700)] overflow-hidden">
             <button 
               onClick={() => setZoom(prev => Math.max(0.5, prev - 0.1))}
+              title={t.ttZoomOut}
               className="p-2 hover:bg-[var(--color-gray-700)] text-[var(--color-text-main)] transition-all border-r border-[var(--color-gray-700)]"
             >
               <ZoomOut size={16} />
             </button>
             <button 
               onClick={() => setZoom(1)}
+              title={t.ttResetZoom}
               className="p-2 hover:bg-[var(--color-gray-700)] text-[var(--color-text-main)] transition-all border-r border-[var(--color-gray-700)]"
             >
               <Maximize size={16} />
             </button>
             <button 
               onClick={() => setZoom(prev => Math.min(2, prev + 0.1))}
+              title={t.ttZoomIn}
               className="p-2 hover:bg-[var(--color-gray-700)] text-[var(--color-text-main)] transition-all"
             >
               <ZoomIn size={16} />
@@ -462,12 +483,14 @@ export default function App() {
           </div>
           <button 
             onClick={() => setShowSettings(true)}
+            title={t.ttSettings}
             className="p-2 bg-[var(--color-bg-secondary)] hover:bg-[var(--color-gray-700)] rounded-lg border border-[var(--color-gray-700)] text-[var(--color-text-main)]"
           >
             <Settings size={18} />
           </button>
           <button 
             onClick={initGame}
+            title={t.ttReset}
             className="p-2 bg-[var(--color-bg-secondary)] hover:bg-[var(--color-gray-700)] rounded-lg border border-[var(--color-gray-700)] text-[var(--color-text-main)]"
           >
             <RotateCcw size={18} />
@@ -477,7 +500,7 @@ export default function App() {
 
       {/* Scoreboard */}
       <div className={`max-w-7xl mx-auto grid gap-4 mb-8 ${gameState.mode === 'alone' ? 'grid-cols-1' : 'grid-cols-2'}`}>
-        <div className={`p-4 rounded-xl border transition-all ${isP1Turn ? 'bg-[var(--color-bg-tertiary)] border-[var(--color-pure-blue)]' : 'bg-[var(--color-bg-secondary)] border-[var(--color-gray-700)] opacity-60'}`}>
+        <div className={`p-4 rounded-xl border transition-all ${isP1Turn ? 'bg-[var(--color-bg-tertiary)] border-[var(--color-soft-blue)]' : 'bg-[var(--color-bg-secondary)] border-[var(--color-gray-700)] opacity-60'}`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               {p1.type === 'ai' ? <Cpu size={16} /> : <User size={16} />}
@@ -488,7 +511,7 @@ export default function App() {
         </div>
 
         {gameState.mode !== 'alone' && (
-          <div className={`p-4 rounded-xl border transition-all ${!isP1Turn ? 'bg-[var(--color-bg-tertiary)] border-[var(--color-pure-magenta)]' : 'bg-[var(--color-bg-secondary)] border-[var(--color-gray-700)] opacity-60'}`}>
+          <div className={`p-4 rounded-xl border transition-all ${!isP1Turn ? 'bg-[var(--color-bg-tertiary)] border-[var(--color-soft-magenta)]' : 'bg-[var(--color-bg-secondary)] border-[var(--color-gray-700)] opacity-60'}`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 {p2.type === 'ai' ? <Cpu size={16} /> : <User size={16} />}
@@ -527,13 +550,14 @@ export default function App() {
                   key={block.id}
                   disabled={block.placed || (gameState.players[gameState.currentPlayer].type === 'ai')}
                   onClick={() => selectBlock(block.id)}
+                  title={t.ttBlock}
                   className={`
                     aspect-square flex items-center justify-center text-[10px] font-bold transition-all border
                     ${block.placed ? 
-                      (gameState.lastMove?.blockId === block.id ? 'bg-[var(--color-last-move)] border-[var(--color-pure-white)] text-[var(--color-pure-white)] z-10' : 'bg-[var(--color-bg-main)] border-[var(--color-gray-900)] text-transparent') 
+                      (gameState.lastMove?.blockId === block.id ? 'bg-[var(--color-last-move)] border-[var(--color-pure-white)] text-[var(--color-pure-black)] z-10' : 'bg-[var(--color-bg-main)] border-[var(--color-gray-900)] text-transparent') 
                       : 
-                      gameState.selectedBlockId === block.id ? 'bg-[var(--color-pure-cyan)] border-[var(--color-pure-white)] text-[var(--color-pure-black)] scale-110 z-10 shadow-xl' : 
-                      'bg-[var(--color-block-unused)] border-[var(--color-pure-blue)]/30 text-[var(--color-pure-white)] hover:bg-[var(--color-pure-blue)]/80'}
+                      gameState.selectedBlockId === block.id ? 'bg-[var(--color-soft-yellow)] border-[var(--color-pure-white)] text-[var(--color-pure-black)] scale-110 z-10 shadow-xl' : 
+                      'bg-[var(--color-block-unused)] border-[var(--color-soft-blue)]/30 text-[var(--color-pure-black)] hover:bg-[var(--color-soft-blue)]/80'}
                   `}
                 >
                   {!block.placed || gameState.lastMove?.blockId === block.id ? block.id : ''}
@@ -557,12 +581,14 @@ export default function App() {
                   key={square.id}
                   disabled={gameState.players[gameState.currentPlayer].type === 'ai'}
                   onClick={() => selectSquare(square.id)}
+                  title={t.ttSquare}
                   className={`
                     aspect-square flex items-center justify-center text-[10px] font-bold transition-all border
-                    ${square.id === errorSquareId ? 'bg-[var(--color-pure-red)] border-[var(--color-pure-white)] text-[var(--color-pure-white)] z-20 scale-110' : 
+                    ${square.id === errorSquareId ? 'bg-[var(--color-soft-red)] border-[var(--color-pure-white)] text-[var(--color-pure-black)] z-20 scale-110' : 
+                      gameState.lastMove?.product === square.value ? 'bg-[var(--color-last-move)] border-[var(--color-pure-white)] text-[var(--color-pure-black)] z-10' :
                       square.highlighted ? 
-                      'bg-[var(--color-square-used)] border-[var(--color-pure-green)]/30 !text-black' : 
-                      'bg-[var(--color-bg-main)] border-[var(--color-gray-900)] text-[var(--color-gray-500)] hover:text-[var(--color-pure-white)] hover:border-[var(--color-gray-700)]'}
+                      'bg-[var(--color-square-used)] border-[var(--color-soft-green)]/30 !text-black' : 
+                      'bg-[var(--color-bg-main)] border-[var(--color-gray-900)] text-[var(--color-gray-500)] hover:text-[var(--color-pure-black)] hover:border-[var(--color-gray-700)]'}
                   `}
                 >
                   {square.value}
@@ -578,6 +604,7 @@ export default function App() {
         <div className="bg-[var(--color-bg-secondary)] rounded-lg border border-[var(--color-gray-700)] overflow-hidden">
           <button 
             onClick={() => setShowLog(!showLog)}
+            title={t.ttLog}
             className="w-full p-4 flex items-center justify-between hover:bg-[var(--color-gray-700)] transition-colors"
           >
             <h3 className="text-xs font-bold text-[var(--color-gray-500)] uppercase tracking-widest flex items-center gap-2">
@@ -622,10 +649,10 @@ export default function App() {
               animate={{ scale: 1 }}
               className="bg-[var(--color-bg-secondary)] rounded-2xl p-8 max-w-sm w-full text-center shadow-2xl border border-[var(--color-gray-700)]"
             >
-              <div className="w-16 h-16 bg-[var(--color-pure-yellow)] text-[var(--color-pure-black)] rounded-full flex items-center justify-center mx-auto mb-6">
+              <div className="w-16 h-16 bg-[var(--color-soft-yellow)] text-[var(--color-pure-black)] rounded-full flex items-center justify-center mx-auto mb-6">
                 <Trophy size={32} />
               </div>
-              <h2 className="text-2xl font-bold text-[var(--color-pure-white)] mb-2">{t.gameOver}</h2>
+              <h2 className="text-2xl font-bold text-[var(--color-pure-black)] mb-2">{t.gameOver}</h2>
               <p className="text-[var(--color-gray-300)] mb-6 font-bold">
                 {p1.score > p2.score ? `${p1.name} ${t.wins}` : p2.score > p1.score ? `${p2.name} ${t.wins}` : t.draw}
               </p>
@@ -643,7 +670,8 @@ export default function App() {
 
               <button
                 onClick={() => setShowSettings(true)}
-                className="w-full bg-[var(--color-pure-blue)] text-[var(--color-pure-white)] py-3 rounded-lg font-bold transition-all"
+                title={t.ttPlayAgain}
+                className="w-full bg-[var(--color-soft-blue)] text-[var(--color-pure-black)] py-3 rounded-lg font-bold transition-all"
               >
                 {t.playAgain}
               </button>
@@ -668,11 +696,12 @@ export default function App() {
                 window.location.reload();
               }
             }}
-            className="hover:text-[var(--color-pure-white)] transition-colors flex items-center gap-1"
+            title={t.ttForceUpdate}
+            className="hover:text-[var(--color-pure-black)] transition-colors flex items-center gap-1"
           >
-            <RotateCcw size={10} /> Force Update
+            <RotateCcw size={10} /> {t.forceUpdate}
           </button>
-          <p>v2.0.6 • Icon Refined</p>
+          <p>v2.0.9 • UI Refined</p>
         </div>
       </div>
     </div>

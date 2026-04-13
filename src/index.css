@@ -4,19 +4,25 @@
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
   
-  --color-bg-main: #1a1a1a;
-  --color-bg-secondary: #2a2a2a;
-  --color-bg-tertiary: #3a3a3a;
+  --color-bg-main: #222222;
+  --color-bg-secondary: #2d2d2d;
+  --color-bg-tertiary: #383838;
   
-  /* Pure RGB (Softened slightly for UI) */
-  --color-pure-red: #ff4d4d;
-  --color-pure-green: #4dff4d;
-  --color-pure-blue: #4d4dff;
-  
-  /* Pure CMY (Softened slightly for UI) */
-  --color-pure-cyan: #4dffff;
-  --color-pure-magenta: #ff4dff;
-  --color-pure-yellow: #ffff4d;
+  /* Vivid Colors (For Logo) */
+  --color-vivid-red: #ff0000;
+  --color-vivid-green: #00ff00;
+  --color-vivid-blue: #0000ff;
+  --color-vivid-cyan: #00ffff;
+  --color-vivid-magenta: #ff00ff;
+  --color-vivid-yellow: #ffff00;
+
+  /* Soft UI Colors */
+  --color-soft-red: #ef9a9a;
+  --color-soft-green: #a5d6a7;
+  --color-soft-blue: #90caf9;
+  --color-soft-cyan: #80deea;
+  --color-soft-magenta: #f48fb1;
+  --color-soft-yellow: #fff59d;
   
   /* Pure BW */
   --color-pure-black: #000000;
@@ -30,11 +36,11 @@
   --color-gray-900: #171717;
 
   /* Functional Mappings */
-  --color-block-unused: var(--color-pure-blue);
-  --color-square-used: var(--color-pure-green);
-  --color-last-move: var(--color-pure-red);
-  --color-text-main: var(--color-pure-white);
-  --color-text-muted: var(--color-gray-300);
+  --color-block-unused: var(--color-soft-blue);
+  --color-square-used: var(--color-soft-green);
+  --color-last-move: var(--color-soft-yellow);
+  --color-text-main: var(--color-pure-black);
+  --color-text-muted: var(--color-gray-700);
 }
 
 @layer base {
