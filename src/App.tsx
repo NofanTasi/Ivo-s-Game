@@ -309,7 +309,6 @@ export default function App() {
       setTimeout(() => setErrorSquareId(null), 400);
     }
   }, [gameState]);
-
   // AI Logic
   useEffect(() => {
     if (!gameState || gameState.gameOver || gameState.players[gameState.currentPlayer].type !== 'ai') return;
@@ -321,115 +320,91 @@ export default function App() {
       const lastMove = gameState.lastMove;
       
       // --- Invariant Calculation ---
-      const getProductCounts = (blocks: BlockData[]) => {
+      const isSquare = (p: number) => Number.isInteger(Math.sqrt(p));
+      
+      const getOddSquareCount = (blocks: BlockData[]) => {
         const counts: Record<number, number> = {};
         blocks.forEach(b => {
-          if (!b.placed) {
+          if (!b.placed && isSquare(b.product)) {
             counts[b.product] = (counts[b.product] || 0) + 1;
           }
         });
-        return counts;
+        return Object.values(counts).filter(c => c % 2 !== 0).length;
       };
 
-      const currentCounts = getProductCounts(gameState.blocks);
+      const currentOddSquareCount = getOddSquareCount(gameState.blocks);
       const squareMap = new Map<number, SquareData>(gameState.squares.map(s => [s.value, s]));
       
-      // Identify moves that maintain the invariant (even number of odd sets)
+      // Identify moves that maintain the invariant (even number of odd square sets)
       const winningMoves = availableBlocks.filter(move => {
-        const nextCounts = { ...currentCounts };
-        nextCounts[move.product]--;
-        if (nextCounts[move.product] === 0) delete nextCounts[move.product];
-        
-        const oddCount = Object.values(nextCounts).filter(c => c % 2 !== 0).length;
-        return oddCount % 2 === 0;
+        const nextCounts = {};
+        // We only care about the parity change of the moved product
+        // If it's a square, it flips the total parity of odd square sets
+        if (isSquare(move.product)) {
+          return (currentOddSquareCount - 1) % 2 === 0;
+        }
+        // If it's not a square, it doesn't change the square parity
+        return currentOddSquareCount % 2 === 0;
       });
-      const isWinning = winningMoves.length > 0;
-      const candidates = isWinning ? winningMoves : availableBlocks;
 
-      // --- Obfuscation Ranking ---
-      const rankedCandidates = candidates.sort((a, b) => {
+      const isWinning = winningMoves.length > 0;
+      const baseCandidates = isWinning ? winningMoves : availableBlocks;
+
+      // Shuffle base candidates to ensure different trajectories each time
+      const shuffledCandidates = [...baseCandidates].sort(() => Math.random() - 0.5);
+
+      // --- Strategic Ranking ---
+      const rankedCandidates = shuffledCandidates.sort((a, b) => {
         const sqA = squareMap.get(a.product);
         const sqB = squareMap.get(b.product);
 
-        // 1. Obscurity: Delay Reaction to last product (Highest Priority)
-        // "not react to (i,j) with (k,l) for which k*l=p as long as possible"
+        // 1. Reaction: React to last product to gain points or restore parity
+        // "if opponent places (i,j) ... place (k,l) with k*l=i*j"
         if (lastMove) {
           const isReactionA = a.product === lastMove.product ? 1 : 0;
           const isReactionB = b.product === lastMove.product ? 1 : 0;
-          if (isReactionA !== isReactionB) return isReactionA - isReactionB;
+          if (isReactionA !== isReactionB) return isReactionB - isReactionA;
 
           // 2. Obscurity: Delay Mirror Move (j,i)
-          // "for i<>j do not place (j,i) if other choices (k,l) with k*l=i*j still are available"
+          // "delay (j,i) as last choice"
           const isMirrorA = a.i === lastMove.j && a.j === lastMove.i ? 1 : 0;
           const isMirrorB = b.i === lastMove.j && b.j === lastMove.i ? 1 : 0;
           if (isMirrorA !== isMirrorB) return isMirrorA - isMirrorB;
         }
 
-        // 3. Obscurity: Delay Diagonal Moves (i,i)
-        // "do not place another (e,e) if other choices (k,l) with k*l=d^2 are still available"
+        // 3. Point Gain: Prioritize squares already touched
+        const gainA = sqA?.highlighted ? 1 : 0;
+        const gainB = sqB?.highlighted ? 1 : 0;
+        if (gainA !== gainB) return gainB - gainA;
+
+        // 4. Obscurity: Delay Diagonal Moves (i,i)
+        // "place (e,e) as last alternative"
         const isDiagonalA = a.i === a.j ? 1 : 0;
         const isDiagonalB = b.i === b.j ? 1 : 0;
         if (isDiagonalA !== isDiagonalB) return isDiagonalA - isDiagonalB;
 
-        if (isWinning) {
-          // WINNING: Maintain Invariant + Obscure Complexity
-          // 3. Obfuscation: Maximize resulting odd sets (Complexity)
-          // "maximizing even amount of p for which #Sp is odd"
-          const getOddCount = (move: BlockData) => {
-            const nextCounts = { ...currentCounts };
-            nextCounts[move.product]--;
-            return Object.values(nextCounts).filter(c => c % 2 !== 0).length;
-          };
-          const oddA = getOddCount(a);
-          const oddB = getOddCount(b);
-          if (oddA !== oddB) return oddB - oddA;
-
-          // 4. Immediate Point Gain
-          const gainA = sqA?.highlighted ? 1 : 0;
-          const gainB = sqB?.highlighted ? 1 : 0;
-          if (gainA !== gainB) return gainB - gainA;
-        } else {
-          // LOSING: Try to catch up but stay obscure (already handled by reaction delay above)
-          // 3. Immediate Point Gain
-          const gainA = sqA?.highlighted ? 1 : 0;
-          const gainB = sqB?.highlighted ? 1 : 0;
-          if (gainA !== gainB) return gainB - gainA;
-
-          // 4. Safe Play: Finish a set of size 1
-          const isSizeOneA = currentCounts[a.product] === 1 ? 1 : 0;
-          const isSizeOneB = currentCounts[b.product] === 1 ? 1 : 0;
-          if (isSizeOneA !== isSizeOneB) return isSizeOneB - isSizeOneA;
+        // 5. Square Priority: If N is odd and we are initiating, prefer square products
+        // "first move should affect a square product if N is odd"
+        if (gameState.n % 2 !== 0 && !lastMove) {
+          const isSqA = isSquare(a.product) ? 1 : 0;
+          const isSqB = isSquare(b.product) ? 1 : 0;
+          if (isSqA !== isSqB) return isSqB - isSqA;
         }
-
-        // 5. Strategic: Avoid giving away points
-        const isOddA = currentCounts[a.product] % 2 !== 0 ? 1 : 0;
-        const isOddB = currentCounts[b.product] % 2 !== 0 ? 1 : 0;
-        if (isOddA !== isOddB) return isOddB - isOddA;
-
-        // 6. Prefer larger remaining sets Sp
-        const countA = currentCounts[a.product];
-        const countB = currentCounts[b.product];
-        if (countA !== countB) return countB - countA;
-
-        // 7. Delay products played earliest
-        const firstA = gameState.productFirstTouched[a.product] ?? Infinity;
-        const firstB = gameState.productFirstTouched[b.product] ?? Infinity;
-        if (firstA !== firstB) return firstB - firstA;
 
         return 0;
       });
 
-      // Pick the best candidate (top of sorted list)
-      // Very small randomness to avoid being 100% predictable, but "try hard"
-      const chosenBlock = Math.random() > 0.02 ? rankedCandidates[0] : rankedCandidates[Math.floor(Math.random() * rankedCandidates.length)];
+      // Pick from top candidates with some randomness for variety
+      const topCount = Math.min(3, rankedCandidates.length);
+      const chosenBlock = rankedCandidates[Math.floor(Math.random() * topCount)];
 
       // Execute AI Turn
       selectBlock(chosenBlock.id);
       selectSquare(chosenBlock.product, chosenBlock.id);
     }, 600);
-
     return () => clearTimeout(timer);
   }, [gameState, selectBlock, selectSquare]);
+
 
   // Render Settings
   if (showSettings) {
@@ -561,7 +536,7 @@ export default function App() {
               <RotateCcw size={10} /> {t.forceUpdate}
             </button>
             <p className="text-[10px] font-mono text-[var(--color-gray-500)] uppercase tracking-widest">
-              v2.2.0
+              v2.2.1
             </p>
           </div>
         </motion.div>
@@ -837,7 +812,7 @@ export default function App() {
           >
             <RotateCcw size={10} /> {t.forceUpdate}
           </button>
-          <p>v2.2.0</p>
+          <p>v2.2.1</p>
         </div>
       </div>
     </div>
