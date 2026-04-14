@@ -6,6 +6,8 @@ interface MiffyProps {
   className?: string;
 }
 
+// Miffy (Nijntje) Component
+// Fun fact: Chosen as the mascot because rabbits "multiply" fast!
 export const Miffy: React.FC<MiffyProps> = ({ size = 100, className = "" }) => {
   const controls = useAnimation();
   const [isFlashing, setIsFlashing] = useState(false);
