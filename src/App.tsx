@@ -10,7 +10,6 @@ import {
   RotateCcw, 
   Settings, 
   User, 
-  Cpu, 
   Info, 
   CheckCircle2, 
   XCircle,
@@ -30,10 +29,8 @@ import { Miffy } from './components/Miffy';
 
 // --- Types ---
 
-type PlayerType = 'human' | 'ai';
 type Player = 'player1' | 'player2';
-type GameMode = 'alone' | 'human-human' | 'computer-human' | 'human-computer';
-type Difficulty = 'easy' | 'normal' | 'hard';
+type GameMode = 'alone' | 'human-human';
 
 interface BlockData {
   id: string;
@@ -53,10 +50,9 @@ interface SquareData {
 interface GameState {
   n: number;
   mode: GameMode;
-  difficulty: Difficulty;
   players: {
-    player1: { type: PlayerType; score: number; name: string };
-    player2: { type: PlayerType; score: number; name: string };
+    player1: { score: number; name: string };
+    player2: { score: number; name: string };
   };
   currentPlayer: Player;
   blocks: BlockData[];
@@ -65,12 +61,11 @@ interface GameState {
   gameOver: boolean;
   history: string[];
   lastMove: { i: number; j: number; product: number; blockId: string; timestamp: number } | null;
-  productFirstTouched: Record<number, number>;
 }
 
 // --- Constants ---
 
-const MIN_N = 7;
+const MIN_N = 6;
 const MAX_N = 13;
 
 // --- Utilities ---
@@ -146,9 +141,8 @@ const Logo = ({ className = "" }: { className?: string }) => {
 // --- Main Component ---
 
 export default function App() {
-  const [n, setN] = useState(9);
-  const [mode, setMode] = useState<GameMode>('human-computer');
-  const [difficulty, setDifficulty] = useState<Difficulty>('normal');
+  const [n, setN] = useState(6);
+  const [mode, setMode] = useState<GameMode>('human-human');
   const [language, setLanguage] = useState<Language>('en');
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [showSettings, setShowSettings] = useState(true);
@@ -157,17 +151,6 @@ export default function App() {
   const [errorSquareId, setErrorSquareId] = useState<number | null>(null);
 
   const t = translations[language];
-  const [, forceUpdate] = React.useReducer(x => x + 1, 0);
-
-  // Force re-render for hard mode blinking timeout
-  useEffect(() => {
-    if (gameState?.difficulty === 'hard' && gameState.lastMove) {
-      const timer = setTimeout(() => {
-        forceUpdate();
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [gameState?.lastMove, gameState?.difficulty]);
 
   // Initialize Game
   const initGame = useCallback(() => {
@@ -175,38 +158,14 @@ export default function App() {
     const initialSquares = generateSquares(n);
     setErrorSquareId(null);
     
-    let p1Type: PlayerType = 'human';
-    let p2Type: PlayerType = 'human';
     let currentPlayer: Player = 'player1';
-
-    switch (mode) {
-      case 'alone':
-        p1Type = 'human';
-        p2Type = 'human';
-        break;
-      case 'human-human':
-        p1Type = 'human';
-        p2Type = 'human';
-        break;
-      case 'computer-human':
-        p1Type = 'ai';
-        p2Type = 'human';
-        currentPlayer = 'player1';
-        break;
-      case 'human-computer':
-        p1Type = 'human';
-        p2Type = 'ai';
-        currentPlayer = 'player1';
-        break;
-    }
 
     setGameState({
       n,
       mode,
-      difficulty,
       players: {
-        player1: { type: p1Type, score: 0, name: p1Type === 'ai' ? t.computer : t.player1 },
-        player2: { type: p2Type, score: 0, name: p2Type === 'ai' ? t.computer : (mode === 'alone' ? t.exercise : t.player2) },
+        player1: { score: 0, name: t.player1 },
+        player2: { score: 0, name: mode === 'alone' ? t.exercise : t.player2 },
       },
       currentPlayer,
       blocks: initialBlocks,
@@ -215,10 +174,9 @@ export default function App() {
       gameOver: false,
       history: [],
       lastMove: null,
-      productFirstTouched: {},
     });
     setShowSettings(false);
-  }, [n, mode, difficulty, t]);
+  }, [n, mode, t]);
 
   // Handle Block Selection
   const selectBlock = useCallback((id: string) => {
@@ -264,11 +222,6 @@ export default function App() {
         
         const nextPlayer = prev.mode === 'alone' ? 'player1' : (prev.currentPlayer === 'player1' ? 'player2' : 'player1');
 
-        const newProductFirstTouched = { ...prev.productFirstTouched };
-        if (newProductFirstTouched[block.product] === undefined) {
-          newProductFirstTouched[block.product] = prev.history.length;
-        }
-
         return {
           ...prev,
           blocks: newBlocks,
@@ -291,7 +244,6 @@ export default function App() {
             timestamp: Date.now()
           },
           history: [...prev.history, `${prev.players[prev.currentPlayer].name}: ${block.i}×${block.j} = ${block.product}`],
-          productFirstTouched: newProductFirstTouched
         };
       });
 
@@ -309,101 +261,6 @@ export default function App() {
       setTimeout(() => setErrorSquareId(null), 400);
     }
   }, [gameState]);
-  // AI Logic
-  useEffect(() => {
-    if (!gameState || gameState.gameOver || gameState.players[gameState.currentPlayer].type !== 'ai') return;
-
-    const timer = setTimeout(() => {
-      const availableBlocks = gameState.blocks.filter(b => !b.placed);
-      if (availableBlocks.length === 0) return;
-
-      const lastMove = gameState.lastMove;
-      
-      // --- Invariant Calculation ---
-      const isSquare = (p: number) => Number.isInteger(Math.sqrt(p));
-      
-      const getOddSquareCount = (blocks: BlockData[]) => {
-        const counts: Record<number, number> = {};
-        blocks.forEach(b => {
-          if (!b.placed && isSquare(b.product)) {
-            counts[b.product] = (counts[b.product] || 0) + 1;
-          }
-        });
-        return Object.values(counts).filter(c => c % 2 !== 0).length;
-      };
-
-      const currentOddSquareCount = getOddSquareCount(gameState.blocks);
-      const squareMap = new Map<number, SquareData>(gameState.squares.map(s => [s.value, s]));
-      
-      // Identify moves that maintain the invariant (even number of odd square sets)
-      const winningMoves = availableBlocks.filter(move => {
-        const nextCounts = {};
-        // We only care about the parity change of the moved product
-        // If it's a square, it flips the total parity of odd square sets
-        if (isSquare(move.product)) {
-          return (currentOddSquareCount - 1) % 2 === 0;
-        }
-        // If it's not a square, it doesn't change the square parity
-        return currentOddSquareCount % 2 === 0;
-      });
-
-      const isWinning = winningMoves.length > 0;
-      const baseCandidates = isWinning ? winningMoves : availableBlocks;
-
-      // Shuffle base candidates to ensure different trajectories each time
-      const shuffledCandidates = [...baseCandidates].sort(() => Math.random() - 0.5);
-
-      // --- Strategic Ranking ---
-      const rankedCandidates = shuffledCandidates.sort((a, b) => {
-        const sqA = squareMap.get(a.product);
-        const sqB = squareMap.get(b.product);
-
-        // 1. Reaction: React to last product to gain points or restore parity
-        // "if opponent places (i,j) ... place (k,l) with k*l=i*j"
-        if (lastMove) {
-          const isReactionA = a.product === lastMove.product ? 1 : 0;
-          const isReactionB = b.product === lastMove.product ? 1 : 0;
-          if (isReactionA !== isReactionB) return isReactionB - isReactionA;
-
-          // 2. Obscurity: Delay Mirror Move (j,i)
-          // "delay (j,i) as last choice"
-          const isMirrorA = a.i === lastMove.j && a.j === lastMove.i ? 1 : 0;
-          const isMirrorB = b.i === lastMove.j && b.j === lastMove.i ? 1 : 0;
-          if (isMirrorA !== isMirrorB) return isMirrorA - isMirrorB;
-        }
-
-        // 3. Point Gain: Prioritize squares already touched
-        const gainA = sqA?.highlighted ? 1 : 0;
-        const gainB = sqB?.highlighted ? 1 : 0;
-        if (gainA !== gainB) return gainB - gainA;
-
-        // 4. Obscurity: Delay Diagonal Moves (i,i)
-        // "place (e,e) as last alternative"
-        const isDiagonalA = a.i === a.j ? 1 : 0;
-        const isDiagonalB = b.i === b.j ? 1 : 0;
-        if (isDiagonalA !== isDiagonalB) return isDiagonalA - isDiagonalB;
-
-        // 5. Square Priority: If N is odd and we are initiating, prefer square products
-        // "first move should affect a square product if N is odd"
-        if (gameState.n % 2 !== 0 && !lastMove) {
-          const isSqA = isSquare(a.product) ? 1 : 0;
-          const isSqB = isSquare(b.product) ? 1 : 0;
-          if (isSqA !== isSqB) return isSqB - isSqA;
-        }
-
-        return 0;
-      });
-
-      // Pick from top candidates with some randomness for variety
-      const topCount = Math.min(3, rankedCandidates.length);
-      const chosenBlock = rankedCandidates[Math.floor(Math.random() * topCount)];
-
-      // Execute AI Turn
-      selectBlock(chosenBlock.id);
-      selectSquare(chosenBlock.product, chosenBlock.id);
-    }, 600);
-    return () => clearTimeout(timer);
-  }, [gameState, selectBlock, selectSquare]);
 
 
   // Render Settings
@@ -443,29 +300,9 @@ export default function App() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-[var(--color-gray-500)] uppercase tracking-widest mb-3">{t.difficulty}</label>
-              <div className="grid grid-cols-3 gap-2">
-                {(['easy', 'normal', 'hard'] as Difficulty[]).map(diff => (
-                  <button
-                    key={diff}
-                    onClick={() => setDifficulty(diff)}
-                    title={diff === 'easy' ? t.ttEasy : diff === 'normal' ? t.ttNormal : t.ttHard}
-                    className={`py-2 rounded-lg font-bold transition-all border text-xs ${
-                      difficulty === diff 
-                        ? 'bg-[var(--color-soft-yellow)] border-[var(--color-soft-yellow)] text-[var(--color-pure-black)]' 
-                        : 'bg-transparent border-[var(--color-gray-700)] text-[var(--color-gray-300)] hover:border-[var(--color-gray-500)]'
-                    }`}
-                  >
-                    {t[diff]}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
               <label className="block text-xs font-bold text-[var(--color-gray-500)] uppercase tracking-widest mb-3">{t.boardSize}</label>
               <div className="grid grid-cols-4 gap-2">
-                {[7, 8, 9, 10, 11, 12, 13].map(val => (
+                {[6, 7, 8, 9, 10, 11, 12, 13].map(val => (
                   <button
                     key={val}
                     onClick={() => setN(val)}
@@ -487,9 +324,7 @@ export default function App() {
               <div className="grid grid-cols-1 gap-2">
                 {[
                   { id: 'alone', label: t.modeAlone, icon: <User size={18} /> },
-                  { id: 'human-human', label: t.modeHumanHuman, icon: <User size={18} /> },
-                  { id: 'computer-human', label: t.modeAiHuman, icon: <Cpu size={18} /> },
-                  { id: 'human-computer', label: t.modeHumanAi, icon: <Cpu size={18} /> }
+                  { id: 'human-human', label: t.modeHumanHuman, icon: <User size={18} /> }
                 ].map(m => (
                   <button
                     key={m.id}
@@ -536,7 +371,7 @@ export default function App() {
               <RotateCcw size={10} /> {t.forceUpdate}
             </button>
             <p className="text-[10px] font-mono text-[var(--color-gray-500)] uppercase tracking-widest">
-              v2.2.1
+              v3.0.0
             </p>
           </div>
         </motion.div>
@@ -560,9 +395,6 @@ export default function App() {
           <Logo />
           <h1 className="text-xl font-bold tracking-tight lowercase">{t.title}</h1>
           <Miffy size={32} />
-          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-soft-yellow)] ml-2">
-            {t[gameState.difficulty]}
-          </span>
         </div>
 
         <div className="flex items-center gap-4">
@@ -613,7 +445,7 @@ export default function App() {
         <div className={`p-4 rounded-xl border transition-all ${isP1Turn ? 'bg-[var(--color-bg-tertiary)] border-[var(--color-soft-blue)]' : 'bg-[var(--color-bg-secondary)] border-[var(--color-gray-700)] opacity-60'}`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              {p1.type === 'ai' ? <Cpu size={16} /> : <User size={16} />}
+              <User size={16} />
               <span className="font-bold text-sm uppercase">{gameState.mode === 'alone' ? t.exerciseMode : p1.name}</span>
             </div>
             <span className="text-2xl font-bold">{p1.score}</span>
@@ -624,7 +456,7 @@ export default function App() {
           <div className={`p-4 rounded-xl border transition-all ${!isP1Turn ? 'bg-[var(--color-bg-tertiary)] border-[var(--color-soft-magenta)]' : 'bg-[var(--color-bg-secondary)] border-[var(--color-gray-700)] opacity-60'}`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                {p2.type === 'ai' ? <Cpu size={16} /> : <User size={16} />}
+                <User size={16} />
                 <span className="font-bold text-sm uppercase">{p2.name}</span>
               </div>
               <span className="text-2xl font-bold">{p2.score}</span>
@@ -658,28 +490,19 @@ export default function App() {
               {gameState.blocks.map(block => (
                 <button
                   key={block.id}
-                  disabled={block.placed || (gameState.players[gameState.currentPlayer].type === 'ai')}
+                  disabled={block.placed}
                   onClick={() => selectBlock(block.id)}
                   title={t.ttBlock}
                   className={`
                     aspect-square flex items-center justify-center text-[10px] font-bold transition-all border
                     ${block.placed ? 
-                      (gameState.lastMove?.blockId === block.id ? 
-                        (gameState.difficulty === 'hard' ? 
-                          (Date.now() - gameState.lastMove.timestamp < 2000 ? 
-                            'animate-blink-4 bg-[var(--color-last-move)] border-[var(--color-pure-white)] text-[var(--color-pure-black)] z-10' : 
-                            'bg-[var(--color-bg-main)] border-[var(--color-gray-900)] text-transparent'
-                          ) : 
-                          'bg-[var(--color-last-move)] border-[var(--color-pure-white)] text-[var(--color-pure-black)] z-10'
-                        ) : 
-                        'bg-[var(--color-bg-main)] border-[var(--color-gray-900)] text-transparent'
-                      ) 
+                      'bg-[var(--color-bg-main)] border-[var(--color-gray-900)] text-transparent'
                       : 
                       gameState.selectedBlockId === block.id ? 'bg-[var(--color-soft-yellow)] border-[var(--color-pure-white)] text-[var(--color-pure-black)] scale-110 z-10 shadow-xl' : 
                       'bg-[var(--color-block-unused)] border-[var(--color-soft-blue)]/30 text-[var(--color-pure-black)] hover:bg-[var(--color-soft-blue)]/80'}
                   `}
                 >
-                  {(!block.placed || (gameState.lastMove?.blockId === block.id && (gameState.difficulty !== 'hard' || Date.now() - gameState.lastMove.timestamp < 2000))) ? block.id : ''}
+                  {!block.placed ? block.id : ''}
                 </button>
               ))}
             </div>
@@ -698,14 +521,11 @@ export default function App() {
               {gameState.squares.map(square => (
                 <button
                   key={square.id}
-                  disabled={gameState.players[gameState.currentPlayer].type === 'ai'}
                   onClick={() => selectSquare(square.id)}
                   title={t.ttSquare}
                   className={`
                     aspect-square flex items-center justify-center text-[10px] font-bold transition-all border
                     ${square.id === errorSquareId ? 'bg-[var(--color-soft-red)] border-[var(--color-pure-white)] text-[var(--color-pure-black)] z-20 scale-110' : 
-                      (gameState.difficulty === 'easy' && gameState.lastMove?.product === square.value) ?
-                      'bg-[var(--color-last-move)] border-[var(--color-pure-white)] text-[var(--color-pure-black)] z-10' :
                       square.highlighted ? 
                       'bg-[var(--color-square-used)] border-[var(--color-soft-green)]/30 text-[var(--color-pure-black)]' : 
                       'bg-[var(--color-bg-main)] border-[var(--color-gray-900)] text-[var(--color-gray-500)] hover:text-[var(--color-gray-100)] hover:border-[var(--color-gray-700)]'}
@@ -812,7 +632,7 @@ export default function App() {
           >
             <RotateCcw size={10} /> {t.forceUpdate}
           </button>
-          <p>v2.2.1</p>
+          <p>v3.0.0</p>
         </div>
       </div>
     </div>
