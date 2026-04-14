@@ -164,7 +164,7 @@ export default function App() {
     if (gameState?.difficulty === 'hard' && gameState.lastMove) {
       const timer = setTimeout(() => {
         forceUpdate();
-      }, 4000);
+      }, 2000);
       return () => clearTimeout(timer);
     }
   }, [gameState?.lastMove, gameState?.difficulty]);
@@ -561,7 +561,7 @@ export default function App() {
               <RotateCcw size={10} /> {t.forceUpdate}
             </button>
             <p className="text-[10px] font-mono text-[var(--color-gray-500)] uppercase tracking-widest">
-              v2.1.9
+              v2.2.0
             </p>
           </div>
         </motion.div>
@@ -579,7 +579,7 @@ export default function App() {
   return (
     <div className="min-h-screen p-4 md:p-8 font-sans text-[var(--color-text-main)]">
       {/* Header */}
-      <div className="max-w-7xl mx-auto mb-8 flex justify-between items-center">
+      <div className="max-w-7xl mx-auto mb-8 flex flex-col gap-4 items-start">
         <div className="flex items-center gap-6">
           {/* Custom IVO Logo */}
           <Logo />
@@ -691,7 +691,7 @@ export default function App() {
                     ${block.placed ? 
                       (gameState.lastMove?.blockId === block.id ? 
                         (gameState.difficulty === 'hard' ? 
-                          (Date.now() - gameState.lastMove.timestamp < 4000 ? 
+                          (Date.now() - gameState.lastMove.timestamp < 2000 ? 
                             'animate-blink-4 bg-[var(--color-last-move)] border-[var(--color-pure-white)] text-[var(--color-pure-black)] z-10' : 
                             'bg-[var(--color-bg-main)] border-[var(--color-gray-900)] text-transparent'
                           ) : 
@@ -704,7 +704,7 @@ export default function App() {
                       'bg-[var(--color-block-unused)] border-[var(--color-soft-blue)]/30 text-[var(--color-pure-black)] hover:bg-[var(--color-soft-blue)]/80'}
                   `}
                 >
-                  {(!block.placed || (gameState.lastMove?.blockId === block.id && (gameState.difficulty !== 'hard' || Date.now() - gameState.lastMove.timestamp < 4000))) ? block.id : ''}
+                  {(!block.placed || (gameState.lastMove?.blockId === block.id && (gameState.difficulty !== 'hard' || Date.now() - gameState.lastMove.timestamp < 2000))) ? block.id : ''}
                 </button>
               ))}
             </div>
@@ -837,7 +837,7 @@ export default function App() {
           >
             <RotateCcw size={10} /> {t.forceUpdate}
           </button>
-          <p>v2.1.9</p>
+          <p>v2.2.0</p>
         </div>
       </div>
     </div>

@@ -69,7 +69,7 @@
 }
 
 .animate-blink-4 {
-  animation: blink-4 4s ease-in-out forwards;
+  animation: blink-4 2s ease-in-out forwards;
 }
 
 .custom-scrollbar::-webkit-scrollbar {
