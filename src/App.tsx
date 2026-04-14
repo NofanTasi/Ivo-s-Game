@@ -272,7 +272,7 @@ export default function App() {
           animate={{ opacity: 1, scale: 1 }}
           className="bg-[var(--color-bg-secondary)] rounded-2xl shadow-2xl p-8 max-w-md w-full border border-[var(--color-gray-700)]"
         >
-          <div className="flex items-center gap-4 mb-8">
+          <div className="flex items-center justify-center gap-4 mb-8">
             <Logo className="text-xl" />
             <h1 className="text-2xl font-bold text-[var(--color-text-main)] lowercase">{t.title}</h1>
             <Miffy size={50} className="ml-2" />
@@ -371,7 +371,7 @@ export default function App() {
               <RotateCcw size={10} /> {t.forceUpdate}
             </button>
             <p className="text-[10px] font-mono text-[var(--color-gray-500)] uppercase tracking-widest">
-              v3.0.0
+              v3.0.2
             </p>
           </div>
         </motion.div>
@@ -389,13 +389,16 @@ export default function App() {
   return (
     <div className="min-h-screen p-4 md:p-8 font-sans text-[var(--color-text-main)]">
       {/* Header */}
-      <div className="max-w-7xl mx-auto mb-8 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-6">
+      <div className="max-w-7xl mx-auto mb-8 flex flex-col items-center gap-4">
+        {/* Line 1: Logo, Title, Miffy */}
+        <div className="flex items-center justify-center gap-6">
           <Logo />
           <h1 className="text-xl font-bold tracking-tight lowercase">{t.title}</h1>
+          <Miffy size={32} />
         </div>
 
-        <div className="flex items-center gap-4">
+        {/* Line 2: Gadgets */}
+        <div className="flex items-center justify-center gap-4">
           <div className="flex items-center bg-[var(--color-bg-secondary)] rounded-lg border border-[var(--color-gray-700)] overflow-hidden">
             <button 
               onClick={() => setZoom(prev => Math.max(0.5, prev - 0.1))}
@@ -434,8 +437,6 @@ export default function App() {
             <RotateCcw size={18} />
           </button>
         </div>
-
-        <Miffy size={32} />
       </div>
 
       {/* Scoreboard */}
@@ -630,7 +631,7 @@ export default function App() {
           >
             <RotateCcw size={10} /> {t.forceUpdate}
           </button>
-          <p>v3.0.1</p>
+          <p>v3.0.2</p>
         </div>
       </div>
     </div>
