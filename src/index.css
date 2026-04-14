@@ -63,6 +63,15 @@
   }
 }
 
+@keyframes blink-4 {
+  0%, 20%, 40%, 60%, 80% { opacity: 1; }
+  10%, 30%, 50%, 70%, 90%, 100% { opacity: 0; }
+}
+
+.animate-blink-4 {
+  animation: blink-4 4s ease-in-out forwards;
+}
+
 .custom-scrollbar::-webkit-scrollbar {
   width: 8px;
   height: 8px;

@@ -33,6 +33,7 @@ import { Miffy } from './components/Miffy';
 type PlayerType = 'human' | 'ai';
 type Player = 'player1' | 'player2';
 type GameMode = 'alone' | 'human-human' | 'computer-human' | 'human-computer';
+type Difficulty = 'easy' | 'normal' | 'hard';
 
 interface BlockData {
   id: string;
@@ -52,6 +53,7 @@ interface SquareData {
 interface GameState {
   n: number;
   mode: GameMode;
+  difficulty: Difficulty;
   players: {
     player1: { type: PlayerType; score: number; name: string };
     player2: { type: PlayerType; score: number; name: string };
@@ -62,7 +64,7 @@ interface GameState {
   selectedBlockId: string | null;
   gameOver: boolean;
   history: string[];
-  lastMove: { i: number; j: number; product: number; blockId: string } | null;
+  lastMove: { i: number; j: number; product: number; blockId: string; timestamp: number } | null;
   productFirstTouched: Record<number, number>;
 }
 
@@ -146,6 +148,7 @@ const Logo = ({ className = "" }: { className?: string }) => {
 export default function App() {
   const [n, setN] = useState(9);
   const [mode, setMode] = useState<GameMode>('human-computer');
+  const [difficulty, setDifficulty] = useState<Difficulty>('normal');
   const [language, setLanguage] = useState<Language>('en');
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [showSettings, setShowSettings] = useState(true);
@@ -154,6 +157,17 @@ export default function App() {
   const [errorSquareId, setErrorSquareId] = useState<number | null>(null);
 
   const t = translations[language];
+  const [, forceUpdate] = React.useReducer(x => x + 1, 0);
+
+  // Force re-render for hard mode blinking timeout
+  useEffect(() => {
+    if (gameState?.difficulty === 'hard' && gameState.lastMove) {
+      const timer = setTimeout(() => {
+        forceUpdate();
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [gameState?.lastMove, gameState?.difficulty]);
 
   // Initialize Game
   const initGame = useCallback(() => {
@@ -189,6 +203,7 @@ export default function App() {
     setGameState({
       n,
       mode,
+      difficulty,
       players: {
         player1: { type: p1Type, score: 0, name: p1Type === 'ai' ? t.computer : t.player1 },
         player2: { type: p2Type, score: 0, name: p2Type === 'ai' ? t.computer : (mode === 'alone' ? t.exercise : t.player2) },
@@ -203,7 +218,7 @@ export default function App() {
       productFirstTouched: {},
     });
     setShowSettings(false);
-  }, [n, mode, t]);
+  }, [n, mode, difficulty, t]);
 
   // Handle Block Selection
   const selectBlock = useCallback((id: string) => {
@@ -268,7 +283,13 @@ export default function App() {
             }
           },
           gameOver: allPlaced,
-          lastMove: { i: block.i, j: block.j, product: block.product, blockId: block.id },
+          lastMove: { 
+            i: block.i, 
+            j: block.j, 
+            product: block.product, 
+            blockId: block.id,
+            timestamp: Date.now()
+          },
           history: [...prev.history, `${prev.players[prev.currentPlayer].name}: ${block.i}×${block.j} = ${block.product}`],
           productFirstTouched: newProductFirstTouched
         };
@@ -447,6 +468,26 @@ export default function App() {
             </div>
 
             <div>
+              <label className="block text-xs font-bold text-[var(--color-gray-500)] uppercase tracking-widest mb-3">{t.difficulty}</label>
+              <div className="grid grid-cols-3 gap-2">
+                {(['easy', 'normal', 'hard'] as Difficulty[]).map(diff => (
+                  <button
+                    key={diff}
+                    onClick={() => setDifficulty(diff)}
+                    title={diff === 'easy' ? t.ttEasy : diff === 'normal' ? t.ttNormal : t.ttHard}
+                    className={`py-2 rounded-lg font-bold transition-all border text-xs ${
+                      difficulty === diff 
+                        ? 'bg-[var(--color-soft-yellow)] border-[var(--color-soft-yellow)] text-[var(--color-pure-black)]' 
+                        : 'bg-transparent border-[var(--color-gray-700)] text-[var(--color-gray-300)] hover:border-[var(--color-gray-500)]'
+                    }`}
+                  >
+                    {t[diff]}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
               <label className="block text-xs font-bold text-[var(--color-gray-500)] uppercase tracking-widest mb-3">{t.boardSize}</label>
               <div className="grid grid-cols-4 gap-2">
                 {[7, 8, 9, 10, 11, 12, 13].map(val => (
@@ -520,7 +561,7 @@ export default function App() {
               <RotateCcw size={10} /> {t.forceUpdate}
             </button>
             <p className="text-[10px] font-mono text-[var(--color-gray-500)] uppercase tracking-widest">
-              v2.1.5
+              v2.1.8
             </p>
           </div>
         </motion.div>
@@ -544,6 +585,9 @@ export default function App() {
           <Logo />
           <h1 className="text-xl font-bold tracking-tight lowercase">{t.title}</h1>
           <Miffy size={32} />
+          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-soft-yellow)] ml-2">
+            {t[gameState.difficulty]}
+          </span>
         </div>
 
         <div className="flex items-center gap-4">
@@ -645,13 +689,22 @@ export default function App() {
                   className={`
                     aspect-square flex items-center justify-center text-[10px] font-bold transition-all border
                     ${block.placed ? 
-                      (gameState.lastMove?.blockId === block.id ? 'bg-[var(--color-last-move)] border-[var(--color-pure-white)] text-[var(--color-pure-black)] z-10' : 'bg-[var(--color-bg-main)] border-[var(--color-gray-900)] text-transparent') 
+                      (gameState.lastMove?.blockId === block.id ? 
+                        (gameState.difficulty === 'hard' ? 
+                          (Date.now() - gameState.lastMove.timestamp < 4000 ? 
+                            'animate-blink-4 bg-[var(--color-last-move)] border-[var(--color-pure-white)] text-[var(--color-pure-black)] z-10' : 
+                            'bg-[var(--color-bg-main)] border-[var(--color-gray-900)] text-transparent'
+                          ) : 
+                          'bg-[var(--color-last-move)] border-[var(--color-pure-white)] text-[var(--color-pure-black)] z-10'
+                        ) : 
+                        'bg-[var(--color-bg-main)] border-[var(--color-gray-900)] text-transparent'
+                      ) 
                       : 
                       gameState.selectedBlockId === block.id ? 'bg-[var(--color-soft-yellow)] border-[var(--color-pure-white)] text-[var(--color-pure-black)] scale-110 z-10 shadow-xl' : 
                       'bg-[var(--color-block-unused)] border-[var(--color-soft-blue)]/30 text-[var(--color-pure-black)] hover:bg-[var(--color-soft-blue)]/80'}
                   `}
                 >
-                  {!block.placed || gameState.lastMove?.blockId === block.id ? block.id : ''}
+                  {(!block.placed || (gameState.lastMove?.blockId === block.id && (gameState.difficulty !== 'hard' || Date.now() - gameState.lastMove.timestamp < 4000))) ? block.id : ''}
                 </button>
               ))}
             </div>
@@ -676,6 +729,8 @@ export default function App() {
                   className={`
                     aspect-square flex items-center justify-center text-[10px] font-bold transition-all border
                     ${square.id === errorSquareId ? 'bg-[var(--color-soft-red)] border-[var(--color-pure-white)] text-[var(--color-pure-black)] z-20 scale-110' : 
+                      (gameState.difficulty === 'easy' && gameState.lastMove?.product === square.value) ?
+                      'bg-[var(--color-last-move)] border-[var(--color-pure-white)] text-[var(--color-pure-black)] z-10' :
                       square.highlighted ? 
                       'bg-[var(--color-square-used)] border-[var(--color-soft-green)]/30 text-[var(--color-pure-black)]' : 
                       'bg-[var(--color-bg-main)] border-[var(--color-gray-900)] text-[var(--color-gray-500)] hover:text-[var(--color-gray-100)] hover:border-[var(--color-gray-700)]'}
@@ -782,7 +837,7 @@ export default function App() {
           >
             <RotateCcw size={10} /> {t.forceUpdate}
           </button>
-          <p>v2.1.5</p>
+          <p>v2.1.8</p>
         </div>
       </div>
     </div>

@@ -39,7 +39,14 @@ export const translations = {
     ttLog: "Show or hide the history of moves",
     ttPlayAgain: "Start a new game with current settings",
     ttBlock: "Click to select this block",
-    ttSquare: "Click to place your selected block here"
+    ttSquare: "Click to place your selected block here",
+    difficulty: "Difficulty",
+    easy: "Easy",
+    normal: "Normal",
+    hard: "Hard",
+    ttEasy: "show last block and product",
+    ttNormal: "show last block",
+    ttHard: "blink last block"
   },
   nl: {
     title: "vermenigvuldig",
@@ -79,7 +86,14 @@ export const translations = {
     ttLog: "Toon of verberg de geschiedenis van zetten",
     ttPlayAgain: "Start een nieuw spel met de huidige instellingen",
     ttBlock: "Klik om dit blok te selecteren",
-    ttSquare: "Klik om je geselecteerde blok hier te plaatsen"
+    ttSquare: "Klik om je geselecteerde blok hier te plaatsen",
+    difficulty: "Moeilijkheidsgraad",
+    easy: "Makkelijk",
+    normal: "Normaal",
+    hard: "Moeilijk",
+    ttEasy: "toon laatste blok en product",
+    ttNormal: "toon laatste blok",
+    ttHard: "knipper laatste blok"
   },
   fr: {
     title: "multiplier",
@@ -119,7 +133,14 @@ export const translations = {
     ttLog: "Afficher ou masquer l'historique des coups",
     ttPlayAgain: "Commencer une nouvelle partie",
     ttBlock: "Cliquez pour sélectionner ce bloc",
-    ttSquare: "Cliquez pour placer votre bloc ici"
+    ttSquare: "Cliquez pour placer votre bloc ici",
+    difficulty: "Difficulté",
+    easy: "Facile",
+    normal: "Normal",
+    hard: "Difficile",
+    ttEasy: "montre le dernier bloc et produit",
+    ttNormal: "montre le dernier bloc",
+    ttHard: "clignote le dernier bloc"
   },
   es: {
     title: "multiplicar",
@@ -159,7 +180,14 @@ export const translations = {
     ttLog: "Mostrar u ocultar el historial de movimientos",
     ttPlayAgain: "Empezar un juego nuevo",
     ttBlock: "Haz clic para seleccionar este bloque",
-    ttSquare: "Haz clic para colocar tu bloque aquí"
+    ttSquare: "Haz clic para colocar tu bloque aquí",
+    difficulty: "Dificultad",
+    easy: "Fácil",
+    normal: "Normal",
+    hard: "Difícil",
+    ttEasy: "muestra el último bloque y producto",
+    ttNormal: "muestra el último bloque",
+    ttHard: "parpadea el último bloque"
   },
   it: {
     title: "moltiplica",
@@ -199,6 +227,13 @@ export const translations = {
     ttLog: "Mostra o nascondi la cronologia delle mosse",
     ttPlayAgain: "Inizia una nuova partita",
     ttBlock: "Clicca per selezionare questo blocco",
-    ttSquare: "Clicca per posizionare il tuo blocco qui"
+    ttSquare: "Clicca per posizionare il tuo blocco qui",
+    difficulty: "Difficoltà",
+    easy: "Facile",
+    normal: "Normale",
+    hard: "Difficile",
+    ttEasy: "mostra l'ultimo blocco e prodotto",
+    ttNormal: "mostra l'ultimo blocco",
+    ttHard: "lampeggia l'ultimo blocco"
   }
 };
