@@ -248,12 +248,7 @@ export default function App() {
       });
 
       if (allPlaced) {
-        confetti({
-          particleCount: 150,
-          spread: 70,
-          origin: { y: 0.6 },
-          colors: ['#0000FF', '#FF0000', '#FFFF00', '#00FFFF', '#FF00FF', '#00FF00']
-        });
+        // Game Over - handled by flash effect in UI
       }
     } else {
       // Incorrect Placement - Flash Red
@@ -371,7 +366,7 @@ export default function App() {
               <RotateCcw size={10} /> {t.forceUpdate}
             </button>
             <p className="text-[10px] font-mono text-[var(--color-gray-500)] uppercase tracking-widest">
-              v3.0.2
+              v3.0.3
             </p>
           </div>
         </motion.div>
@@ -511,8 +506,14 @@ export default function App() {
           <div className="space-y-4">
             <h2 className="text-sm font-bold uppercase tracking-widest text-[var(--color-gray-500)]">{t.theField}</h2>
             
-            <div 
-              className="grid gap-1 bg-[var(--color-bg-secondary)] p-2 rounded-lg border border-[var(--color-gray-700)]"
+            <motion.div 
+              animate={gameState.gameOver ? { 
+                backgroundColor: ['var(--color-bg-secondary)', 'var(--color-soft-magenta)', 'var(--color-soft-green)'] 
+              } : { 
+                backgroundColor: 'var(--color-bg-secondary)' 
+              }}
+              transition={{ duration: 1.5, times: [0, 0.3, 1] }}
+              className="grid gap-1 p-2 rounded-lg border border-[var(--color-gray-700)]"
               style={{ 
                 gridTemplateColumns: `repeat(${gameState.n}, minmax(0, 1fr))` 
               }}
@@ -533,7 +534,7 @@ export default function App() {
                   {square.value}
                 </button>
               ))}
-            </div>
+            </motion.div>
           </div>
         </div>
       </div>
@@ -575,40 +576,8 @@ export default function App() {
         </div>
       </div>
 
-      {/* Game Over Modal - Minimalist */}
-      <AnimatePresence>
-        {gameState.gameOver && (
-          <motion.div 
-            initial={{ y: 100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 100, opacity: 0 }}
-            className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4"
-          >
-            <div className="bg-[var(--color-bg-secondary)] rounded-2xl p-6 shadow-2xl border border-[var(--color-gray-700)] flex items-center gap-6">
-              <div className="w-12 h-12 bg-[var(--color-soft-yellow)] text-[var(--color-pure-black)] rounded-full flex items-center justify-center shrink-0">
-                <Trophy size={24} />
-              </div>
-              <div className="flex-1 text-left">
-                <h2 className="text-lg font-bold text-[var(--color-text-main)]">{t.gameOver}</h2>
-                <p className="text-xs text-[var(--color-gray-300)] font-bold">
-                  {p1.score > p2.score ? `${p1.name} ${t.wins}` : p2.score > p1.score ? `${p2.name} ${t.wins}` : t.draw}
-                </p>
-                <div className="flex gap-4 mt-1">
-                  <span className="text-[10px] text-[var(--color-gray-500)] uppercase font-bold">{p1.name}: {p1.score}</span>
-                  <span className="text-[10px] text-[var(--color-gray-500)] uppercase font-bold">{p2.name}: {p2.score}</span>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowSettings(true)}
-                title={t.ttPlayAgain}
-                className="bg-[var(--color-soft-blue)] text-[var(--color-pure-black)] px-4 py-2 rounded-lg font-bold text-xs transition-all hover:scale-105"
-              >
-                {t.playAgain}
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Game Over Modal - Removed for minimalism */}
+
       {/* Footer */}
       <div className="max-w-7xl mx-auto mt-8 pb-8 flex justify-between items-center text-[10px] font-mono text-[var(--color-gray-500)] uppercase tracking-widest">
         <p>© 2026 multiply</p>
@@ -631,7 +600,7 @@ export default function App() {
           >
             <RotateCcw size={10} /> {t.forceUpdate}
           </button>
-          <p>v3.0.2</p>
+          <p>v3.0.3</p>
         </div>
       </div>
     </div>
